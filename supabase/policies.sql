@@ -1,0 +1,19 @@
+-- Human-readable index of RLS and Storage policies.
+-- Canonical applied SQL lives in supabase/migrations/. Do not run this file
+-- independently in production.
+
+-- buildings: public SELECT of active rows; admin INSERT/UPDATE
+-- categories: public SELECT of active rows; admin INSERT/UPDATE
+-- products: public SELECT of active rows; admin INSERT/UPDATE
+-- profiles: own SELECT/INSERT/UPDATE; role forced to customer except service_role/postgres
+-- addresses: own SELECT/INSERT/UPDATE/DELETE; admin SELECT
+-- orders: own SELECT; admin SELECT/UPDATE; INSERT only via place_order()
+-- order_items: SELECT if parent order is own or admin
+-- notifications: recipient SELECT/UPDATE (read state)
+-- push_subscriptions: own SELECT/INSERT/UPDATE/DELETE; sending uses the service role
+-- order_status_history: SELECT if parent order is own or admin
+-- settings: public SELECT; admin UPDATE
+-- storage.objects product-images: public SELECT; admin INSERT/UPDATE/DELETE
+--
+-- Direct INSERT into orders, order_items, notifications, and order_status_history
+-- is intentionally omitted for clients. Use security-definer RPCs instead.

@@ -1,0 +1,10 @@
+{
+  "name": "SJ Fresh Hub",
+  "short_name": "SJ Fresh",
+  "description": "Fresh vegetables and fruits delivered to selected buildings.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8FC",
+  "theme_color": "#14611E",
+  "lang": "en"
+}
