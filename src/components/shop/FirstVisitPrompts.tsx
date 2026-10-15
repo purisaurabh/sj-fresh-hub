@@ -1,167 +1,53 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Clock } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { canUseBrowserPush, ensurePushSubscription } from "@/components/notifications/browser-push";
+import { PromptDialog } from "@/components/shop/PromptDialog";
 import { SHOP_HOURS_MESSAGE, SHOP_HOURS_TITLE } from "@/lib/constants";
-import { withActionOverlay } from "@/lib/ui/action-overlay";
-import {
-  acknowledgePushPrompt,
-  acknowledgeShopHours,
-  hasAcknowledgedPushPrompt,
-  hasAcknowledgedShopHours,
-  shouldShowPushPrompt,
-  type BrowserNotificationPermission,
-} from "@/lib/ui/shop-hours";
-
-type Step = "hours" | "push";
-
-function currentPushPermission(): BrowserNotificationPermission {
-  if (typeof Notification === "undefined") {
-    return "unsupported";
-  }
-  return Notification.permission;
-}
-
-function Shell({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
-  return (
-    <div
-      className="fixed inset-0 z-200 flex items-end justify-center bg-black/60 p-4 pt-[max(1.5rem,env(safe-area-inset-top))] sm:items-center"
-      role="presentation"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="first-visit-title"
-        className="mb-[max(1rem,env(safe-area-inset-bottom))] w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:mb-0"
-      >
-        <h2 id="first-visit-title" className="text-lg font-semibold text-gray-900">
-          {title}
-        </h2>
-        <div className="mt-3">{children}</div>
-        <div className="mt-4 flex flex-col gap-2">{footer}</div>
-      </div>
-    </div>
-  );
-}
+import { acknowledgeShopHours, hasAcknowledgedShopHours } from "@/lib/ui/shop-hours";
 
 export function FirstVisitPrompts() {
-  const [step, setStep] = useState<Step | null>(null);
-  const [pending, setPending] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!hasAcknowledgedShopHours()) {
-      setStep("hours");
-      return;
-    }
-    if (shouldShowPushPrompt(currentPushPermission(), hasAcknowledgedPushPrompt())) {
-      setStep("push");
-      return;
-    }
-    if (currentPushPermission() === "granted") {
-      void ensurePushSubscription();
+      setOpen(true);
     }
   }, []);
 
-  function finishHours() {
-    acknowledgeShopHours();
-    if (shouldShowPushPrompt(currentPushPermission(), hasAcknowledgedPushPrompt())) {
-      setStep("push");
-      return;
-    }
-    if (currentPushPermission() === "granted") {
-      void ensurePushSubscription();
-    }
-    setStep(null);
+  if (!open) {
+    return null;
   }
 
-  function finishPush() {
-    acknowledgePushPrompt();
-    setStep(null);
-  }
-
-  async function onAllow() {
-    setPending(true);
-    try {
-      await withActionOverlay(async () => {
-        if (typeof window === "undefined" || !window.isSecureContext || !("Notification" in window)) {
-          finishPush();
-          toast.error(
-            "This phone link is not HTTPS, so the browser cannot enable alerts yet. You will still get in-app alerts after login.",
-          );
-          return;
-        }
-        const permission = await Notification.requestPermission();
-        finishPush();
-        if (permission === "denied") {
-          toast.error("Notifications are blocked. You can enable them later in browser settings.");
-          return;
-        }
-        if (permission === "granted" && canUseBrowserPush()) {
-          const subscription = await ensurePushSubscription();
-          if (subscription) {
-            toast.success("Browser alerts are on for this device.");
-          }
-          return;
-        }
-      });
-    } finally {
-      setPending(false);
-    }
-  }
-
-  if (step === "hours") {
-    return (
-      <Shell
-        title={SHOP_HOURS_TITLE}
-        footer={
-          <Button type="button" className="h-11 w-full bg-forest text-white hover:bg-forest/90" onClick={finishHours}>
-            Got it
-          </Button>
-        }
-      >
-        <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-mint text-forest">
-          <Clock className="size-5" aria-hidden="true" />
-        </div>
-        <p className="text-sm leading-relaxed text-gray-600">{SHOP_HOURS_MESSAGE}</p>
-        <div className="mt-3 grid gap-2 rounded-xl bg-mint px-3 py-3 text-sm text-gray-800">
-          <p>
-            <span className="font-semibold text-forest">Orders:</span> 9:00 AM – 12:00 PM
-          </p>
-          <p>
-            <span className="font-semibold text-forest">Delivery:</span> 3:00 PM – 6:00 PM only
-          </p>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (step === "push") {
-    return (
-      <Shell
-        title="Turn on notifications"
-        footer={
-          <>
-            <Button type="button" className="h-11 w-full bg-forest text-white hover:bg-forest/90" disabled={pending} onClick={() => void onAllow()}>
-              {pending ? "Asking…" : "Allow notifications"}
-            </Button>
-            <Button type="button" variant="outline" className="h-11 w-full" disabled={pending} onClick={finishPush}>
-              Later
-            </Button>
-          </>
-        }
-      >
-        <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-mint text-forest">
-          <Bell className="size-5" aria-hidden="true" />
-        </div>
-        <p className="text-sm leading-relaxed text-gray-600">
-          Allow alerts so order updates (accepted, out for delivery, delivered) appear even if this tab is in the background.
+  return (
+    <PromptDialog
+      title={SHOP_HOURS_TITLE}
+      footer={
+        <Button
+          type="button"
+          className="h-11 w-full bg-forest text-white hover:bg-forest/90"
+          onClick={() => {
+            acknowledgeShopHours();
+            setOpen(false);
+          }}
+        >
+          Got it
+        </Button>
+      }
+    >
+      <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-mint text-forest">
+        <Clock className="size-5" aria-hidden="true" />
+      </div>
+      <p className="text-sm leading-relaxed text-gray-600">{SHOP_HOURS_MESSAGE}</p>
+      <div className="mt-3 grid gap-2 rounded-xl bg-mint px-3 py-3 text-sm text-gray-800">
+        <p>
+          <span className="font-semibold text-forest">Orders:</span> 9:00 AM – 12:00 PM
         </p>
-      </Shell>
-    );
-  }
-
-  return null;
+        <p>
+          <span className="font-semibold text-forest">Delivery:</span> 3:00 PM – 6:00 PM only
+        </p>
+      </div>
+    </PromptDialog>
+  );
 }

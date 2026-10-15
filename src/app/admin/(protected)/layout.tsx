@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
+import { LoggedInPushPrompt } from "@/components/notifications/LoggedInPushPrompt";
 import { NotificationsRealtime } from "@/components/notifications/NotificationsRealtime";
 import { UnreadBadge } from "@/components/notifications/UnreadBadge";
 import { requireAdmin } from "@/features/auth/session";
@@ -25,6 +26,7 @@ async function AdminSessionWidgets() {
   return (
     <>
       <NotificationsRealtime userId={user.id} />
+      <LoggedInPushPrompt />
     </>
   );
 }

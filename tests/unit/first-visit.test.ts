@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { shouldShowPushPrompt } from "@/lib/ui/shop-hours";
 
-describe("first-visit push prompt", () => {
-  it("asks only when the browser has not decided yet", () => {
-    expect(shouldShowPushPrompt("default")).toBe(true);
-    expect(shouldShowPushPrompt("granted")).toBe(false);
-    expect(shouldShowPushPrompt("denied")).toBe(false);
-    expect(shouldShowPushPrompt("unsupported")).toBe(false);
+describe("logged-in push prompt", () => {
+  it("never asks before login", () => {
+    expect(shouldShowPushPrompt("default", false)).toBe(false);
+    expect(shouldShowPushPrompt("denied", false)).toBe(false);
+    expect(shouldShowPushPrompt("granted", false)).toBe(false);
   });
 
-  it("does not ask again after the visitor has answered", () => {
-    expect(shouldShowPushPrompt("default", true)).toBe(false);
+  it("asks after login until the browser has allowed notifications", () => {
+    expect(shouldShowPushPrompt("default", true)).toBe(true);
+    expect(shouldShowPushPrompt("denied", true)).toBe(true);
+    expect(shouldShowPushPrompt("granted", true)).toBe(false);
+    expect(shouldShowPushPrompt("unsupported", true)).toBe(false);
   });
 });

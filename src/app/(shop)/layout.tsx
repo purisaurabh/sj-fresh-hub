@@ -7,6 +7,7 @@ import { MobileNavChrome } from "@/components/layout/MobileNavChrome";
 import { ShopShell } from "@/components/layout/ShopShell";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { LoggedInPushPrompt } from "@/components/notifications/LoggedInPushPrompt";
 import { UnreadBadge } from "@/components/notifications/UnreadBadge";
 import { getAuthContext } from "@/features/auth/session";
 import { getUnreadNotificationCount } from "@/features/notifications/queries";
@@ -24,6 +25,14 @@ async function ShopMobileNav() {
   return (
     <MobileNav showAlerts unreadBadge={<UnreadBadge userId={user.id} initialCount={unreadCount} />} />
   );
+}
+
+async function ShopPushPrompt() {
+  const { user } = await getAuthContext();
+  if (!user) {
+    return null;
+  }
+  return <LoggedInPushPrompt />;
 }
 
 export default async function ShopLayout({ children }: { children: ReactNode }) {
@@ -47,6 +56,9 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
         deliveryArea={settings.delivery_area_text}      />
       <Suspense fallback={<MobileNavChrome showAlerts={false} />}>
         <ShopMobileNav />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ShopPushPrompt />
       </Suspense>
     </div>
   );

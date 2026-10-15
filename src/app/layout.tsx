@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Poppins } from "next/font/google";
 import { AppLoader } from "@/components/feedback/AppLoader";
 import { RouteProgress } from "@/components/feedback/RouteProgress";
-import { SyncPushSubscription } from "@/components/notifications/SyncPushSubscription";
 import { FirstVisitPrompts } from "@/components/shop/FirstVisitPrompts";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteUrl } from "@/lib/env";
@@ -58,7 +57,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={`${poppins.className} flex min-h-full flex-col`}>
         {children}
         <FirstVisitPrompts />
-        <SyncPushSubscription />
         <RouteProgress />
         <AppLoader />
         <Toaster />

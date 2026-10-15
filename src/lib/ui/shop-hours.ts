@@ -35,12 +35,9 @@ export function acknowledgePushPrompt() {
 
 export type BrowserNotificationPermission = "default" | "granted" | "denied" | "unsupported";
 
-export function shouldShowPushPrompt(
-  permission: BrowserNotificationPermission,
-  alreadyAcknowledged = false,
-) {
-  if (alreadyAcknowledged) {
+export function shouldShowPushPrompt(permission: BrowserNotificationPermission, loggedIn: boolean) {
+  if (!loggedIn) {
     return false;
   }
-  return permission === "default";
+  return permission === "default" || permission === "denied";
 }
