@@ -9,8 +9,8 @@ const tunnelHosts = [
 ];
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Cache Components + Partial Prefetch crash every request on Cloudflare Workers (Error 1101).
+  // https://github.com/vercel/next.js/issues/100122
   allowedDevOrigins: tunnelHosts,
   experimental: {
     serverActions: {

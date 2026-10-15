@@ -1,4 +1,3 @@
-import { cacheLife } from "next/cache";
 import { Leaf, MapPin, Smartphone, Truck, Wallet } from "lucide-react";
 import { Logo } from "@/components/layout/Logo";
 
@@ -29,9 +28,7 @@ function phoneHref(phone: string) {
   return digits.length === 10 ? `+91${digits}` : phone.replace(/[^\d+]/g, "");
 }
 
-async function CopyrightYear() {
-  "use cache";
-  cacheLife("days");
+function CopyrightYear() {
   return <>{new Date().getFullYear()}</>;
 }
 

@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
 
 export type ActiveBuilding = {
@@ -9,10 +8,6 @@ export type ActiveBuilding = {
 };
 
 export async function getActiveBuildings(): Promise<ActiveBuilding[]> {
-  "use cache";
-  cacheTag("buildings");
-  cacheLife("hours");
-
   const supabase = createPublicSupabaseClient();
   if (!supabase) {
     return [];

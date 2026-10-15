@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { actionError, actionSuccess, type ActionResult } from "@/lib/action-result";
 import { requireAdmin } from "@/features/auth/session";
 import { buildingSchema, categorySchema, orderStatusSchema, productSchema } from "@/features/admin/schemas";
@@ -10,9 +10,6 @@ import { slugify } from "@/lib/slug";
 import { MAX_PRODUCT_IMAGE_BYTES, PRODUCT_IMAGE_BUCKET } from "@/lib/constants";
 
 function revalidateStorefront() {
-  updateTag("catalog");
-  updateTag("buildings");
-  updateTag("settings");
   revalidatePath("/");
   revalidatePath("/admin");
 }

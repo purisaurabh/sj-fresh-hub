@@ -1,4 +1,3 @@
-import { cacheLife } from "next/cache";
 import { Smartphone } from "lucide-react";
 import { SHOP_CONTACT_PHONE } from "@/lib/constants";
 
@@ -19,9 +18,7 @@ function phoneHref(phone: string) {
   return local.length === 10 ? `+91${local}` : phone.replace(/[^\d+]/g, "");
 }
 
-async function CopyrightYear() {
-  "use cache";
-  cacheLife("days");
+function CopyrightYear() {
   return <>{new Date().getFullYear()}</>;
 }
 

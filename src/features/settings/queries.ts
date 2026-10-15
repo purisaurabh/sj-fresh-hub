@@ -1,12 +1,7 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
 import { fallbackSettings, type PublicSettings } from "@/features/products/queries";
 
 export async function getPublicSettings(): Promise<PublicSettings> {
-  "use cache";
-  cacheTag("settings");
-  cacheLife("minutes");
-
   const supabase = createPublicSupabaseClient();
   if (!supabase) {
     return fallbackSettings;

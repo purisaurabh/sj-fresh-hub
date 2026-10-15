@@ -60,7 +60,9 @@
 | 2026-10-13 | Google Maps iframe/link in admin order details | Help admin locate delivery address |
 | 2026-10-13 | Preserve SJ Fresh Hub green/yellow visual direction | Consistent storefront and admin experience |
 | 2026-10-13 | Next.js 16 `src/proxy.ts` instead of `middleware.ts` | Current App Router request-boundary convention |
+| 2026-10-15 | No `src/proxy.ts` / `middleware.ts` on Cloudflare | OpenNext Node middleware is experimental and 1101-prone; auth stays in layouts |
 | 2026-10-13 | Keep `cacheComponents` enabled | Default Next.js 16 performance model; public catalog uses `'use cache'` |
+| 2026-10-15 | Disable `cacheComponents` on Cloudflare Workers | Next.js 16 Cache Components throws Error 1101 on every Worker request |
 | 2026-10-13 | Placeholder shop coordinates in `settings` (Pune sample) | Owner has not confirmed the real shop location |
 | 2026-10-13 | Delivery fee and minimum order default to 0 | Owner has not confirmed commercial values |
 | 2026-10-13 | English-only UI for now | Language choice is still open |

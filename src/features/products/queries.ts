@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
 import type { StorefrontProduct } from "@/features/products/types";
 import { searchScore } from "@/lib/search";
@@ -33,10 +32,6 @@ export const fallbackSettings: PublicSettings = {
 };
 
 export async function getPublicCatalog(query?: string, categorySlug?: string): Promise<CatalogPayload> {
-  "use cache";
-  cacheTag("catalog");
-  cacheLife("minutes");
-
   const supabase = createPublicSupabaseClient();
   if (!supabase) {
     return {
