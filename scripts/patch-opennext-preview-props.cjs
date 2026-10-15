@@ -12,19 +12,31 @@ if (!existsSync(file)) {
 }
 
 let source = readFileSync(file, "utf8");
+let changed = false;
+
 const originalGlob = "**/{*-manifest,required-server-files,prefetch-hints}.json";
 const patchedGlob = "**/{*-manifest,required-server-files,prefetch-hints,preview-props}.json";
+if (source.includes(originalGlob) && !source.includes(patchedGlob)) {
+  source = source.replace(originalGlob, patchedGlob);
+  changed = true;
+}
 
-if (source.includes(patchedGlob)) {
-  console.log("OpenNext already inlines preview-props.json.");
+const originalFallback = `        p.endsWith("prefetch-hints")) {
+      return {};
+    }`;
+const patchedFallback = `        p.endsWith("prefetch-hints") ||
+        p.endsWith("preview-props")) {
+      return {};
+    }`;
+if (source.includes(originalFallback) && !source.includes(patchedFallback)) {
+  source = source.replace(originalFallback, patchedFallback);
+  changed = true;
+}
+
+if (!changed) {
+  console.log("OpenNext preview-props loadManifest handling already patched.");
   process.exit(0);
 }
 
-if (!source.includes(originalGlob)) {
-  console.warn("OpenNext loadManifest glob not found; skipping preview-props patch.");
-  process.exit(0);
-}
-
-source = source.replace(originalGlob, patchedGlob);
 writeFileSync(file, source);
-console.log("Patched OpenNext to inline Next.js 16.4 preview-props.json.");
+console.log("Patched OpenNext to handle Next.js 16.4 preview-props.json.");
