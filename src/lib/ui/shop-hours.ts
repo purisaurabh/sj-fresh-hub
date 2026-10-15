@@ -32,3 +32,15 @@ export function hasAcknowledgedPushPrompt() {
 export function acknowledgePushPrompt() {
   writeFlag(PUSH_PROMPT_SEEN_KEY);
 }
+
+export type BrowserNotificationPermission = "default" | "granted" | "denied" | "unsupported";
+
+export function shouldShowPushPrompt(
+  permission: BrowserNotificationPermission,
+  alreadyAcknowledged = false,
+) {
+  if (alreadyAcknowledged) {
+    return false;
+  }
+  return permission === "default";
+}

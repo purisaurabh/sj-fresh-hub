@@ -5,6 +5,24 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { readVapidConfig } from "@/lib/push/env";
 import { webPushClickUrl, webPushPayload } from "@/lib/push/payload";
 
+async function sendWithFetch(
+  subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
+  payload: string,
+) {
+  const details = webpush.generateRequestDetails(subscription, payload);
+  const body = details.body ? Uint8Array.from(details.body) : undefined;
+  const response = await fetch(details.endpoint, {
+    method: details.method,
+    headers: details.headers,
+    body,
+  });
+  if (!response.ok && response.status !== 201) {
+    const error = new Error(`Web push failed with ${response.status}`) as Error & { statusCode?: number };
+    error.statusCode = response.status;
+    throw error;
+  }
+}
+
 export async function sendWebPushForOrder(orderId: string): Promise<void> {
   const vapid = readVapidConfig();
   if (!vapid) {
@@ -48,7 +66,7 @@ export async function sendWebPushForOrder(orderId: string): Promise<void> {
         return;
       }
       try {
-        await webpush.sendNotification(
+        await sendWithFetch(
           {
             endpoint: subscription.endpoint,
             keys: { p256dh: subscription.p256dh, auth: subscription.auth },

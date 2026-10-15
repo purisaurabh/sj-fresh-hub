@@ -12,9 +12,18 @@ import {
   acknowledgeShopHours,
   hasAcknowledgedPushPrompt,
   hasAcknowledgedShopHours,
+  shouldShowPushPrompt,
+  type BrowserNotificationPermission,
 } from "@/lib/ui/shop-hours";
 
 type Step = "hours" | "push";
+
+function currentPushPermission(): BrowserNotificationPermission {
+  if (typeof Notification === "undefined") {
+    return "unsupported";
+  }
+  return Notification.permission;
+}
 
 function Shell({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
   return (
@@ -47,14 +56,25 @@ export function FirstVisitPrompts() {
       setStep("hours");
       return;
     }
-    if (!hasAcknowledgedPushPrompt()) {
+    if (shouldShowPushPrompt(currentPushPermission(), hasAcknowledgedPushPrompt())) {
       setStep("push");
+      return;
+    }
+    if (currentPushPermission() === "granted") {
+      void ensurePushSubscription();
     }
   }, []);
 
   function finishHours() {
     acknowledgeShopHours();
-    setStep("push");
+    if (shouldShowPushPrompt(currentPushPermission(), hasAcknowledgedPushPrompt())) {
+      setStep("push");
+      return;
+    }
+    if (currentPushPermission() === "granted") {
+      void ensurePushSubscription();
+    }
+    setStep(null);
   }
 
   function finishPush() {
@@ -74,22 +94,18 @@ export function FirstVisitPrompts() {
           return;
         }
         const permission = await Notification.requestPermission();
+        finishPush();
         if (permission === "denied") {
-          finishPush();
           toast.error("Notifications are blocked. You can enable them later in browser settings.");
           return;
         }
         if (permission === "granted" && canUseBrowserPush()) {
           const subscription = await ensurePushSubscription();
-          finishPush();
           if (subscription) {
-            toast.success("Browser alerts are on.");
-          } else {
-            toast.error("Permission was granted, but this device could not be registered.");
+            toast.success("Browser alerts are on for this device.");
           }
           return;
         }
-        finishPush();
       });
     } finally {
       setPending(false);

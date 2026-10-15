@@ -34,9 +34,13 @@ export async function ensurePushSubscription(): Promise<PushSubscription | null>
   if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) {
     return null;
   }
-  await savePushSubscription({
-    endpoint: json.endpoint,
-    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-  });
+  try {
+    await savePushSubscription({
+      endpoint: json.endpoint,
+      keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+    });
+  } catch {
+    // Guest visitors and expired sessions still keep the browser subscription.
+  }
   return subscription;
 }
