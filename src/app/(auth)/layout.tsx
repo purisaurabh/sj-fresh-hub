@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import { Apple, Leaf, Salad, Sparkles, Truck, Wallet } from "lucide-react";
+import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { PageSlot } from "@/components/feedback/PageSlot";
 import { AuthMobileFooter } from "@/components/layout/AuthMobileFooter";
 import { Logo } from "@/components/layout/Logo";
@@ -59,7 +61,9 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         </div>
         <div className="relative flex flex-1 items-start justify-center bg-background px-4 py-4 sm:px-6 lg:mt-0 lg:h-full lg:items-center lg:bg-mint/70 lg:px-10 lg:py-10">
           <div className="w-full max-w-md rounded-2xl border border-border bg-white p-4 shadow-[0_18px_50px_rgba(20,97,30,0.08)] sm:rounded-3xl sm:p-8">
-            <PageSlot>{children}</PageSlot>
+            <PageSlot>
+              <Suspense fallback={<BrandLoader />}>{children}</Suspense>
+            </PageSlot>
           </div>
         </div>
         <AuthMobileFooter shopName={settings.shop_name} shopPhone={settings.shop_phone || SHOP_CONTACT_PHONE} />

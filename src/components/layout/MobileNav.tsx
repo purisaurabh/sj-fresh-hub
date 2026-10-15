@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Home, ShoppingBag } from "lucide-react";
@@ -19,8 +20,15 @@ function isShopNavActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function MobileNav({ unreadBadge, showAlerts = true }: { unreadBadge?: ReactNode; showAlerts?: boolean }) {
-  const pathname = usePathname();
+function MobileNavChrome({
+  unreadBadge,
+  showAlerts = true,
+  pathname,
+}: {
+  unreadBadge?: ReactNode;
+  showAlerts?: boolean;
+  pathname: string;
+}) {
   const cartActive = pathname === "/cart" || pathname.startsWith("/checkout");
   const items = showAlerts ? ITEMS : ITEMS.filter((item) => item.href !== "/notifications");
 
@@ -64,5 +72,18 @@ export function MobileNav({ unreadBadge, showAlerts = true }: { unreadBadge?: Re
         </li>
       </ul>
     </nav>
+  );
+}
+
+function MobileNavWithPath(props: { unreadBadge?: ReactNode; showAlerts?: boolean }) {
+  const pathname = usePathname();
+  return <MobileNavChrome {...props} pathname={pathname} />;
+}
+
+export function MobileNav(props: { unreadBadge?: ReactNode; showAlerts?: boolean }) {
+  return (
+    <Suspense fallback={<MobileNavChrome {...props} pathname="" />}>
+      <MobileNavWithPath {...props} />
+    </Suspense>
   );
 }

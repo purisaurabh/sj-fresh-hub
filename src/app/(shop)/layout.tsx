@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { ShopShell } from "@/components/layout/ShopShell";
@@ -35,7 +36,9 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
       />
       <SiteHeader />
       <main className="mx-auto w-full max-w-[1250px] flex-1 px-4 py-4 md:px-6 md:py-6">
-        <ShopShell>{children}</ShopShell>
+        <ShopShell>
+          <Suspense fallback={<BrandLoader />}>{children}</Suspense>
+        </ShopShell>
       </main>
       <SiteFooter
         shopName={settings.shop_name}

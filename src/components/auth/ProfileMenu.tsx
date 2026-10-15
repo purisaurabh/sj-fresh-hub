@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { logoutUser } from "@/features/auth/actions";
@@ -26,7 +26,6 @@ type ProfileMenuProps = {
 
 export function ProfileMenu({ name, phone, showProfileLink = false }: ProfileMenuProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const startRoute = useRouteTransition((state) => state.start);
   const [, startTransition] = useTransition();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -41,7 +40,7 @@ export function ProfileMenu({ name, phone, showProfileLink = false }: ProfileMen
 
   function goToProfile() {
     closeMenu();
-    if (pathname === "/profile") {
+    if (window.location.pathname === "/profile") {
       return;
     }
     startRoute("/profile");

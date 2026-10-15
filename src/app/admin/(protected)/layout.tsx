@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
+import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { NotificationsRealtime } from "@/components/notifications/NotificationsRealtime";
 import { UnreadBadge } from "@/components/notifications/UnreadBadge";
 import { requireAdmin } from "@/features/auth/session";
@@ -46,7 +47,7 @@ export default function AdminProtectedLayout({ children }: { children: ReactNode
           </Suspense>
         }
       >
-        {children}
+        <Suspense fallback={<BrandLoader />}>{children}</Suspense>
       </AdminShell>
     </>
   );
