@@ -7,28 +7,13 @@ import { ChevronDown } from "lucide-react";
 import { ordersFilterHref } from "@/features/admin/orders-filter";
 import { orderStatusLabel } from "@/features/orders/status";
 import { ORDER_STATUSES } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AdminOrdersSkeleton } from "@/components/orders/OrdersListSkeleton";
 
 type OrdersStatusFilterProps = {
   selected?: string;
   from?: string;
   children: ReactNode;
 };
-
-function OrdersListSkeleton() {
-  return (
-    <ul className="grid gap-3 lg:grid-cols-2" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading orders</span>
-      {Array.from({ length: 4 }).map((_, index) => (
-        <li key={index} className="rounded-2xl border border-border bg-white p-4">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="mt-2 h-4 w-48" />
-          <Skeleton className="mt-4 h-10 w-full" />
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function OrdersStatusFilter({ selected, from, children }: OrdersStatusFilterProps) {
   const router = useRouter();
@@ -100,7 +85,7 @@ export function OrdersStatusFilter({ selected, from, children }: OrdersStatusFil
           </Link>
         ))}
       </nav>
-      {isPending ? <OrdersListSkeleton /> : children}
+      {isPending ? <AdminOrdersSkeleton /> : children}
     </>
   );
 }

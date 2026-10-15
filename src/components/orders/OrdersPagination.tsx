@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -5,30 +7,52 @@ export function OrdersPagination({
   page,
   total,
   pageSize,
-  hrefForPage,
+  prevHref,
+  nextHref,
+  pending = false,
   scroll = false,
+  onNavigate,
 }: {
   page: number;
   total: number;
   pageSize: number;
-  hrefForPage: (page: number) => string;
+  prevHref: string | null;
+  nextHref: string | null;
+  pending?: boolean;
   scroll?: boolean;
+  onNavigate?: (href: string) => void;
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) {
     return null;
   }
 
-  const prev = page > 1 ? hrefForPage(page - 1) : null;
-  const next = page < totalPages ? hrefForPage(page + 1) : null;
+  function go(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (
+      pending ||
+      !onNavigate ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    ) {
+      return;
+    }
+    event.preventDefault();
+    onNavigate(href);
+  }
 
   return (
     <nav className="flex items-center justify-center gap-2 pt-1" aria-label="Order pages" data-local-navigation>
-      {prev ? (
+      {prevHref ? (
         <Link
-          href={prev}
+          href={prevHref}
           scroll={scroll}
-          className="inline-flex h-9 items-center gap-1 rounded-lg border border-border bg-white px-2.5 text-sm font-medium text-forest hover:bg-mint"
+          onClick={(event) => go(event, prevHref)}
+          aria-disabled={pending || undefined}
+          tabIndex={pending ? -1 : undefined}
+          className="inline-flex h-9 items-center gap-1 rounded-lg border border-border bg-white px-2.5 text-sm font-medium text-forest hover:bg-mint aria-disabled:pointer-events-none aria-disabled:opacity-50"
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
           Prev
@@ -42,11 +66,14 @@ export function OrdersPagination({
       <p className="min-w-24 text-center text-xs font-medium text-muted-foreground">
         Page {page} of {totalPages}
       </p>
-      {next ? (
+      {nextHref ? (
         <Link
-          href={next}
+          href={nextHref}
           scroll={scroll}
-          className="inline-flex h-9 items-center gap-1 rounded-lg border border-border bg-white px-2.5 text-sm font-medium text-forest hover:bg-mint"
+          onClick={(event) => go(event, nextHref)}
+          aria-disabled={pending || undefined}
+          tabIndex={pending ? -1 : undefined}
+          className="inline-flex h-9 items-center gap-1 rounded-lg border border-border bg-white px-2.5 text-sm font-medium text-forest hover:bg-mint aria-disabled:pointer-events-none aria-disabled:opacity-50"
         >
           Next
           <ChevronRight className="size-4" aria-hidden="true" />

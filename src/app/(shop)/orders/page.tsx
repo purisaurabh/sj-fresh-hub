@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { PackageOpen, ShoppingBasket } from "lucide-react";
-import { OrdersPagination } from "@/components/orders/OrdersPagination";
+import { OrdersPagedList } from "@/components/orders/OrdersPagedList";
+import { CustomerOrdersSkeleton } from "@/components/orders/OrdersListSkeleton";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,15 @@ async function OrdersContent({ searchParams }: OrdersPageProps) {
       {total === 0 ? (
         <NoOrders />
       ) : (
-        <div className="flex flex-col gap-3">
+        <OrdersPagedList
+          page={page}
+          total={total}
+          pageSize={pageSize}
+          prevHref={page > 1 ? ordersPageHref(page - 1) : null}
+          nextHref={page * pageSize < total ? ordersPageHref(page + 1) : null}
+          scroll
+          skeleton={<CustomerOrdersSkeleton />}
+        >
           {orders.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center">
               <p className="font-semibold text-gray-900">No orders on this page</p>
@@ -86,8 +95,7 @@ async function OrdersContent({ searchParams }: OrdersPageProps) {
           ) : (
             <OrderList orders={orders} />
           )}
-          <OrdersPagination page={page} total={total} pageSize={pageSize} hrefForPage={ordersPageHref} scroll />
-        </div>
+        </OrdersPagedList>
       )}
     </div>
   );

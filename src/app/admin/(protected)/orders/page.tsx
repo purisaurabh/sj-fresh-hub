@@ -4,7 +4,8 @@ import { connection } from "next/server";
 import { AlertTriangle, CalendarDays, PackageX, ShoppingBag } from "lucide-react";
 import { AdminOrderCard } from "@/components/admin/AdminOrderCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { OrdersPagination } from "@/components/orders/OrdersPagination";
+import { OrdersPagedList } from "@/components/orders/OrdersPagedList";
+import { AdminOrdersSkeleton } from "@/components/orders/OrdersListSkeleton";
 import { OrdersStatusFilter } from "@/components/admin/OrdersStatusFilter";
 import { ordersFilterHref } from "@/features/admin/orders-filter";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
@@ -97,27 +98,35 @@ async function OrdersContent({ searchParams }: OrdersPageProps) {
         })}
       </ul>
       <OrdersStatusFilter selected={selected} from={from}>
-        {orders.length === 0 ? (
+        {total === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center">
             <p className="font-semibold text-gray-900">No orders in this view</p>
             <p className="mt-1 text-sm text-muted-foreground">Try another status, or wait for a new checkout.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            <ul className="grid gap-2 lg:grid-cols-2">
-              {orders.map((order) => (
-                <li key={order.id}>
-                  <AdminOrderCard order={order} />
-                </li>
-              ))}
-            </ul>
-            <OrdersPagination
-              page={page}
-              total={total}
-              pageSize={pageSize}
-              hrefForPage={(nextPage) => ordersFilterHref(selected, from, nextPage)}
-            />
-          </div>
+          <OrdersPagedList
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            prevHref={page > 1 ? ordersFilterHref(selected, from, page - 1) : null}
+            nextHref={page * pageSize < total ? ordersFilterHref(selected, from, page + 1) : null}
+            skeleton={<AdminOrdersSkeleton />}
+          >
+            {orders.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center">
+                <p className="font-semibold text-gray-900">No orders on this page</p>
+                <p className="mt-1 text-sm text-muted-foreground">Try the previous page to see more orders.</p>
+              </div>
+            ) : (
+              <ul className="grid gap-2 lg:grid-cols-2">
+                {orders.map((order) => (
+                  <li key={order.id}>
+                    <AdminOrderCard order={order} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </OrdersPagedList>
         )}
       </OrdersStatusFilter>
     </div>
