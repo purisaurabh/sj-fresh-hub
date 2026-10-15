@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { MobileNavChrome } from "@/components/layout/MobileNavChrome";
 import { ShopShell } from "@/components/layout/ShopShell";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -44,7 +45,7 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
         shopName={settings.shop_name}
         shopPhone={settings.shop_phone || SHOP_CONTACT_PHONE}
         deliveryArea={settings.delivery_area_text}      />
-      <Suspense fallback={<MobileNav showAlerts={false} />}>
+      <Suspense fallback={<MobileNavChrome showAlerts={false} />}>
         <ShopMobileNav />
       </Suspense>
     </div>
