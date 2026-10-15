@@ -10,7 +10,9 @@ async function sendWithFetch(
   payload: string,
 ) {
   const details = webpush.generateRequestDetails(subscription, payload);
-  const body = details.body ? Uint8Array.from(details.body) : undefined;
+  const rawBody = details.body as Buffer | Uint8Array | string | undefined;
+  const body =
+    rawBody == null ? undefined : typeof rawBody === "string" ? rawBody : new Uint8Array(rawBody);
   const response = await fetch(details.endpoint, {
     method: details.method,
     headers: details.headers,

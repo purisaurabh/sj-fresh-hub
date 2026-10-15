@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { getMyNotifications } from "@/features/notifications/queries";
 
 export const metadata = { title: "Notifications" };
@@ -15,6 +16,7 @@ async function AdminNotificationsContent() {
         title="Notifications"
         description="New Cash on Delivery orders appear here as they come in."
       />
+      <PushEnableButton />
       <NotificationInbox notifications={notifications} role="admin" />
     </div>
   );

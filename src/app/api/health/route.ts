@@ -6,5 +6,6 @@ export async function GET() {
     service: "sj-fresh-hub",
     supabaseConfigured: isSupabaseConfigured(),
     serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    vapidConfigured: Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
   });
 }

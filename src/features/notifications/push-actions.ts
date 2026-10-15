@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { actionError, actionSuccess, type ActionResult } from "@/lib/action-result";
 import { getAuthContext } from "@/features/auth/session";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { readVapidConfig } from "@/lib/push/env";
 
 const subscriptionSchema = z.object({
@@ -22,11 +23,13 @@ export async function savePushSubscription(input: unknown): Promise<ActionResult
     return actionError("That browser could not be registered for alerts.");
   }
 
-  const { supabase, user } = await getAuthContext();
+  const { user } = await getAuthContext();
   if (!user) {
-    return actionSuccess();
+    return actionError("Sign in to receive browser alerts on this device.");
   }
-  const { error } = await supabase.from("push_subscriptions").upsert(
+
+  const admin = createAdminSupabaseClient();
+  const { error } = await admin.from("push_subscriptions").upsert(
     {
       user_id: user.id,
       endpoint: parsed.data.endpoint,
@@ -47,11 +50,12 @@ export async function deletePushSubscription(endpoint: string): Promise<ActionRe
   if (!parsed.success) {
     return actionError("That browser alert subscription is not valid.");
   }
-  const { supabase, user } = await getAuthContext();
+  const { user } = await getAuthContext();
   if (!user) {
     return actionSuccess();
   }
-  const { error } = await supabase
+  const admin = createAdminSupabaseClient();
+  const { error } = await admin
     .from("push_subscriptions")
     .delete()
     .eq("user_id", user.id)

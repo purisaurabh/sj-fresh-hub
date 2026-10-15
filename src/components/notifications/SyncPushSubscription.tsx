@@ -8,7 +8,21 @@ export function SyncPushSubscription() {
     if (typeof Notification === "undefined" || Notification.permission !== "granted") {
       return;
     }
-    void ensurePushSubscription();
+
+    let cancelled = false;
+    const delays = [0, 1500, 4000];
+
+    delays.forEach((delay) => {
+      window.setTimeout(() => {
+        if (!cancelled) {
+          void ensurePushSubscription();
+        }
+      }, delay);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return null;

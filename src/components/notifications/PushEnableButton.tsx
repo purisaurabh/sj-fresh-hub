@@ -7,7 +7,7 @@ import { deletePushSubscription } from "@/features/notifications/push-actions";
 import {
   canUseBrowserPush,
   ensurePushSubscription,
-  vapidPublicKey,
+  getVapidPublicKey,
 } from "@/components/notifications/browser-push";
 import { withActionOverlay } from "@/lib/ui/action-overlay";
 
@@ -18,21 +18,22 @@ export function PushEnableButton() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!canUseBrowserPush() || !vapidPublicKey()) {
-      setState("unsupported");
-      return;
-    }
-    if (Notification.permission === "denied") {
-      setState("blocked");
-      return;
-    }
-    if (Notification.permission === "granted") {
-      void ensurePushSubscription().then((subscription) => {
+    void (async () => {
+      if (!canUseBrowserPush() || !(await getVapidPublicKey())) {
+        setState("unsupported");
+        return;
+      }
+      if (Notification.permission === "denied") {
+        setState("blocked");
+        return;
+      }
+      if (Notification.permission === "granted") {
+        const subscription = await ensurePushSubscription();
         setState(subscription ? "on" : "off");
-      });
-      return;
-    }
-    setState("off");
+        return;
+      }
+      setState("off");
+    })();
   }, []);
 
   async function onEnable() {
@@ -46,7 +47,7 @@ export function PushEnableButton() {
         }
         const subscription = await ensurePushSubscription();
         if (!subscription) {
-          toast.error("Could not turn on browser alerts.");
+          toast.error("Log in on this device, then tap Enable browser alerts again.");
           setState("off");
           return;
         }
@@ -76,24 +77,28 @@ export function PushEnableButton() {
     }
   }
 
-  if (state === "loading" || state === "unsupported") {
+  if (state === "loading") {
     return null;
   }
 
   return (
     <div className="rounded-xl border border-border bg-white p-4">
       <p className="font-medium">Browser notification bar</p>
-      {state === "blocked" ? (
+      {state === "unsupported" ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          This browser cannot show system alerts. Use Chrome or Edge on HTTPS, or install the site on iPhone from the share menu.
+        </p>
+      ) : state === "blocked" ? (
         <p className="mt-1 text-sm text-muted-foreground">
           Alerts are blocked in this browser. Allow notifications for this site in browser settings, then refresh.
         </p>
       ) : state === "on" ? (
         <p className="mt-1 text-sm text-muted-foreground">
-          This device will show order alerts even if the tab is in the background.
+          This device will show order alerts even if the website is closed.
         </p>
       ) : (
         <p className="mt-1 text-sm text-muted-foreground">
-          Allow notifications once so new orders and status changes appear in your browser or system notification bar.
+          Allow notifications once so new orders and status changes appear in your phone or laptop notification bar, even if the site is closed.
         </p>
       )}
       {state === "off" ? (

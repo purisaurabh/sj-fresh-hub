@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Building2, PackageOpen, Phone, ShoppingBag, Truck } from "lucide-react";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { SavedAddressesPanel } from "@/components/profile/SavedAddressesPanel";
 import { EmptyState } from "@/components/shop/EmptyState";
@@ -114,6 +115,7 @@ async function ProfileContent() {
         </Panel>
 
         <div className="flex flex-col gap-5">
+          <PushEnableButton />
           <SavedAddressesPanel buildings={buildings} addresses={addresses} />
 
           <section className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-white p-4 shadow-sm sm:px-6">

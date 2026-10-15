@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
+import { PushEnableButton } from "@/components/notifications/PushEnableButton";
 import { requireUser } from "@/features/auth/session";
 import { getMyNotifications } from "@/features/notifications/queries";
 import { notificationsPathForRole } from "@/features/notifications/paths";
@@ -23,6 +24,7 @@ async function NotificationsContent() {
         <h1 className="text-lg font-semibold text-gray-900 md:text-2xl">Notifications</h1>
         <p className="mt-1 text-sm text-muted-foreground">Live updates about your orders, all in one place.</p>
       </div>
+      <PushEnableButton />
       <NotificationInbox notifications={notifications} role={profile?.role ?? "customer"} />
     </div>
   );

@@ -1,22 +1,41 @@
 import { savePushSubscription } from "@/features/notifications/push-actions";
 import { isWebPushConfigured, urlBase64ToUint8Array } from "@/lib/push/keys";
 
-export function vapidPublicKey(): string | undefined {
-  return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-}
+let cachedPublicKey: string | undefined;
 
 export function canUseBrowserPush(): boolean {
   return (
     typeof window !== "undefined" &&
+    window.isSecureContext &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
-    "Notification" in window &&
-    isWebPushConfigured(vapidPublicKey())
+    "Notification" in window
   );
 }
 
+export async function getVapidPublicKey(): Promise<string | undefined> {
+  const fromEnv = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (isWebPushConfigured(fromEnv)) {
+    return fromEnv;
+  }
+  if (cachedPublicKey) {
+    return cachedPublicKey;
+  }
+  try {
+    const response = await fetch("/api/push/vapid-public-key", { cache: "no-store" });
+    const data = (await response.json()) as { publicKey?: string };
+    if (isWebPushConfigured(data.publicKey)) {
+      cachedPublicKey = data.publicKey;
+      return cachedPublicKey;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export async function ensurePushSubscription(): Promise<PushSubscription | null> {
-  const publicKey = vapidPublicKey();
+  const publicKey = await getVapidPublicKey();
   if (!canUseBrowserPush() || !publicKey || Notification.permission !== "granted") {
     return null;
   }
@@ -34,13 +53,12 @@ export async function ensurePushSubscription(): Promise<PushSubscription | null>
   if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) {
     return null;
   }
-  try {
-    await savePushSubscription({
-      endpoint: json.endpoint,
-      keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-    });
-  } catch {
-    // Guest visitors and expired sessions still keep the browser subscription.
+  const result = await savePushSubscription({
+    endpoint: json.endpoint,
+    keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+  });
+  if (!result.ok) {
+    return null;
   }
   return subscription;
 }
