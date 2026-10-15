@@ -63,6 +63,7 @@
 | 2026-10-15 | No `src/proxy.ts` / `middleware.ts` on Cloudflare | OpenNext Node middleware is experimental and 1101-prone; auth stays in layouts |
 | 2026-10-13 | Keep `cacheComponents` enabled | Default Next.js 16 performance model; public catalog uses `'use cache'` |
 | 2026-10-15 | Disable `cacheComponents` on Cloudflare Workers | Next.js 16 Cache Components throws Error 1101 on every Worker request |
+| 2026-10-15 | Patch OpenNext loadManifest for `preview-props.json` | Next 16.4 + `@opennextjs/cloudflare@1.20.11` 1101s until the upstream release |
 | 2026-10-13 | Placeholder shop coordinates in `settings` (Pune sample) | Owner has not confirmed the real shop location |
 | 2026-10-13 | Delivery fee and minimum order default to 0 | Owner has not confirmed commercial values |
 | 2026-10-13 | English-only UI for now | Language choice is still open |
