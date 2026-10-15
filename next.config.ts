@@ -14,12 +14,12 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: tunnelHosts,
   experimental: {
     serverActions: {
-      allowedOrigins: tunnelHosts,
+      allowedOrigins: [...tunnelHosts, "*.workers.dev"],
     },
   },
   serverExternalPackages: ["web-push"],
   images: {
-    formats: ["image/avif", "image/webp"],
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -39,3 +39,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+void import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev());
