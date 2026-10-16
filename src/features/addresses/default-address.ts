@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireCustomer } from "@/features/auth/session";
 
 export async function ensureDefaultDeliveryAddress(buildingId: string | null) {
@@ -21,7 +22,7 @@ export async function ensureDefaultDeliveryAddress(buildingId: string | null) {
     return;
   }
 
-  await supabase.from("addresses").insert({
+  const { error } = await supabase.from("addresses").insert({
     user_id: user.id,
     label: "Home",
     line1: building.address ?? building.name,
@@ -31,4 +32,9 @@ export async function ensureDefaultDeliveryAddress(buildingId: string | null) {
     longitude: building.longitude,
     is_default: true,
   });
+
+  if (!error) {
+    revalidatePath("/profile");
+    revalidatePath("/checkout");
+  }
 }

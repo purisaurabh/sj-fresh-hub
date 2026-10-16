@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
-import { CatalogSkeleton } from "@/components/shop/CatalogSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { getPublicCatalog } from "@/features/products/queries";
 import { LOW_STOCK_THRESHOLD } from "@/lib/constants";
@@ -17,7 +15,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const catalog = await getPublicCatalog();
   const product = catalog.products.find((item) => item.slug === slug);
   if (!product) {
-    return { title: "Product" };
+    return { title: "Product not found" };
   }
   return {
     title: product.name,
@@ -27,7 +25,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
-async function ProductDetail({ params }: ProductPageProps) {
+export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const catalog = await getPublicCatalog();
   const product = catalog.products.find((item) => item.slug === slug);
@@ -86,13 +84,5 @@ async function ProductDetail({ params }: ProductPageProps) {
         </div>
       </div>
     </article>
-  );
-}
-
-export default function ProductPage({ params }: ProductPageProps) {
-  return (
-    <Suspense fallback={<CatalogSkeleton />}>
-      <ProductDetail params={params} />
-    </Suspense>
   );
 }

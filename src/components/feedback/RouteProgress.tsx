@@ -1,27 +1,37 @@
 "use client";
 
-import { Suspense, useEffect, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { pathFromHref, useRouteTransition } from "@/lib/ui/route-transition";
 
+const OVERLAY_TIMEOUT_MS = 8000;
+
 function RouteProgressInner() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
   const pendingHref = useRouteTransition((state) => state.pendingHref);
+  const originHref = useRouteTransition((state) => state.originHref);
   const start = useRouteTransition((state) => state.start);
   const clear = useRouteTransition((state) => state.clear);
   const current = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
   useEffect(() => {
-    if (!pendingHref || isPending) {
+    if (!pendingHref) {
       return;
     }
-    if (pendingHref === current) {
+    const pendingPath = pendingHref.split("?")[0] ?? pendingHref;
+    if (pathname === pendingPath || (originHref !== null && current !== originHref)) {
       clear();
     }
-  }, [clear, current, isPending, pendingHref]);
+  }, [clear, current, originHref, pathname, pendingHref]);
+
+  useEffect(() => {
+    if (!pendingHref) {
+      return;
+    }
+    const timer = window.setTimeout(() => clear(), OVERLAY_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [clear, pendingHref]);
 
   useEffect(() => {
     function onClick(event: MouseEvent) {
@@ -55,16 +65,12 @@ function RouteProgressInner() {
         return;
       }
 
-      event.preventDefault();
-      start(next);
-      startTransition(() => {
-        router.push(next);
-      });
+      start(next, here);
     }
 
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [router, start]);
+  }, [start]);
 
   return null;
 }

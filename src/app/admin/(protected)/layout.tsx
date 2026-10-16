@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProfileMenu } from "@/components/auth/ProfileMenu";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { LoggedInPushPrompt } from "@/components/notifications/LoggedInPushPrompt";
 import { NotificationsRealtime } from "@/components/notifications/NotificationsRealtime";
 import { UnreadBadge } from "@/components/notifications/UnreadBadge";
@@ -31,7 +30,9 @@ async function AdminSessionWidgets() {
   );
 }
 
-export default function AdminProtectedLayout({ children }: { children: ReactNode }) {
+export default async function AdminProtectedLayout({ children }: { children: ReactNode }) {
+  await requireAdmin();
+
   return (
     <>
       <Suspense fallback={null}>
@@ -49,7 +50,7 @@ export default function AdminProtectedLayout({ children }: { children: ReactNode
           </Suspense>
         }
       >
-        <Suspense fallback={<BrandLoader />}>{children}</Suspense>
+        {children}
       </AdminShell>
     </>
   );

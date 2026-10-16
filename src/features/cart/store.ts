@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { calculateCartTotals } from "@/lib/money";
@@ -100,6 +101,25 @@ export const useCartStore = create<CartState>()(
     },
   ),
 );
+
+export function useCartHydrated() {
+  const [hydrated, setHydrated] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return useCartStore.persist.hasHydrated();
+  });
+
+  useEffect(() => {
+    if (useCartStore.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    return useCartStore.persist.onFinishHydration(() => setHydrated(true));
+  }, []);
+
+  return hydrated;
+}
 
 export function selectCartTotals(items: CartItem[], deliveryFee: number) {
   return calculateCartTotals(

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Banknote, Minus, Plus, ShoppingBasket, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { selectCartTotals, useCartStore, type CartItem } from "@/features/cart/store";
+import { selectCartTotals, useCartHydrated, useCartStore, type CartItem } from "@/features/cart/store";
 import { formatQuantity } from "@/components/orders/order-status-meta";
 import { formatInr, formatPriceWithUnit, lineTotal } from "@/lib/money";
 
@@ -64,17 +64,9 @@ export function CartView({ deliveryFee, minimumOrder, isOpen }: CartViewProps) {
   const removeItem = useCartStore((state) => state.removeItem);
   const clear = useCartStore((state) => state.clear);
   const totals = selectCartTotals(items, deliveryFee);
-  const [ready, setReady] = useState(false);
+  const ready = useCartHydrated();
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
-
-  useEffect(() => {
-    const finish = () => setReady(true);
-    if (useCartStore.persist.hasHydrated()) {
-      finish();
-    }
-    return useCartStore.persist.onFinishHydration(finish);
-  }, []);
 
   if (!ready) {
     return <BrandLoader />;

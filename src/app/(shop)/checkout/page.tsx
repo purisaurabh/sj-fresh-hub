@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { EmptyState } from "@/components/shop/EmptyState";
 import { ensureDefaultDeliveryAddress } from "@/features/addresses/default-address";
@@ -51,10 +49,6 @@ async function CheckoutContent() {
   );
 }
 
-export default function CheckoutPage() {
-  return (
-    <Suspense fallback={<BrandLoader />}>
-      <CheckoutContent />
-    </Suspense>
-  );
+export default async function CheckoutPage() {
+  return <CheckoutContent />;
 }

@@ -129,6 +129,7 @@ export function OrderDetails({ order, history, shopPhone, isNew = false }: Order
   const shopDigits = shopPhone.replace(/\D/g, "").slice(-10);
   const times = stepTimes(history);
   const itemCount = order.items.length;
+  const showPlacedBanner = isNew && status === "placed";
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
@@ -143,7 +144,7 @@ export function OrderDetails({ order, history, shopPhone, isNew = false }: Order
         All orders
       </Link>
 
-      {isNew ? (
+      {showPlacedBanner ? (
         <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
           <CircleCheckBig className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <div>

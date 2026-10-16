@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { registerUser } from "@/features/auth/actions";
 import type { ActiveBuilding } from "@/features/buildings/queries";
+import { loginHref } from "@/lib/auth/next-path";
 import { authInputClassName } from "@/components/auth/auth-field";
 import { AuthFormStatus } from "@/components/auth/AuthFormStatus";
 import { AuthPasswordField } from "@/components/auth/AuthPasswordField";
@@ -15,9 +16,10 @@ import { withActionOverlay } from "@/lib/ui/action-overlay";
 
 type RegisterFormProps = {
   buildings: ActiveBuilding[];
+  next?: string | null;
 };
 
-export function RegisterForm({ buildings }: RegisterFormProps) {
+export function RegisterForm({ buildings, next }: RegisterFormProps) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +33,7 @@ export function RegisterForm({ buildings }: RegisterFormProps) {
     setPending(true);
     setError(undefined);
     const result = await withActionOverlay(() =>
-      registerUser({ fullName, phone, password, confirmPassword, buildingId }),
+      registerUser({ fullName, phone, password, confirmPassword, buildingId, next }),
     );
     setPending(false);
     if (!result.ok) {
@@ -118,7 +120,7 @@ export function RegisterForm({ buildings }: RegisterFormProps) {
       </form>
       <p className="border-t border-border pt-5 text-center text-sm text-muted-foreground">
         Already registered?{" "}
-        <Link href="/login" className="font-semibold text-forest underline-offset-2 hover:underline">
+        <Link href={loginHref(next)} className="font-semibold text-forest underline-offset-2 hover:underline">
           Log in
         </Link>
       </p>

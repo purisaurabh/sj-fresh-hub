@@ -7,12 +7,13 @@ import { Pencil, Plus } from "lucide-react";
 import { AddressDialog } from "@/components/profile/AddressDialog";
 import { AuthFormStatus } from "@/components/auth/AuthFormStatus";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { EmptyState } from "@/components/shop/EmptyState";
 import { Button } from "@/components/ui/button";
 import type { SavedAddress } from "@/features/addresses/queries";
 import type { ActiveBuilding } from "@/features/buildings/queries";
 import { placeOrder } from "@/features/orders/actions";
-import { selectCartTotals, useCartStore } from "@/features/cart/store";
+import { selectCartTotals, useCartHydrated, useCartStore } from "@/features/cart/store";
 import { formatInr, formatPriceWithUnit, lineTotal } from "@/lib/money";
 import { withActionOverlay } from "@/lib/ui/action-overlay";
 
@@ -41,6 +42,7 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const router = useRouter();
   const items = useCartStore((state) => state.items);
+  const cartReady = useCartHydrated();
   const [addressId, setAddressId] = useState(
     addresses.find((address) => address.is_default)?.id ?? addresses[0]?.id ?? "",
   );
@@ -93,6 +95,10 @@ export function CheckoutForm({
     if (!result.ok) {
       setError(result.error);
     }
+  }
+
+  if (!cartReady) {
+    return <BrandLoader />;
   }
 
   if (items.length === 0) {

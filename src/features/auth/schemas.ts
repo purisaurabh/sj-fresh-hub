@@ -29,7 +29,7 @@ export const loginSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
-  fullName: z.string().trim().min(2).max(80),
+  fullName: z.string().trim().min(2, "Enter your full name").max(80, "Name is too long"),
   buildingId: z.string().uuid("Select a valid building"),
 });
 

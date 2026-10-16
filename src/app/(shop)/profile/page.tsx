@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Building2, PackageOpen, Phone, ShoppingBag, Truck } from "lucide-react";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { SavedAddressesPanel } from "@/components/profile/SavedAddressesPanel";
 import { EmptyState } from "@/components/shop/EmptyState";
+import { ensureDefaultDeliveryAddress } from "@/features/addresses/default-address";
 import { getMyAddresses } from "@/features/addresses/queries";
 import { requireCustomer } from "@/features/auth/session";
 import { getActiveBuildings } from "@/features/buildings/queries";
@@ -35,12 +34,6 @@ function Panel({ title, action, children }: { title: string; action?: React.Reac
 
 async function ProfileContent() {
   const { user, profile } = await requireCustomer();
-  const [buildings, addresses, orders] = await Promise.all([
-    getActiveBuildings(),
-    getMyAddresses(user.id),
-    getMyOrders(user.id),
-  ]);
-
   if (!profile) {
     return (
       <EmptyState
@@ -49,6 +42,13 @@ async function ProfileContent() {
       />
     );
   }
+
+  await ensureDefaultDeliveryAddress(profile.building_id);
+  const [buildings, addresses, orders] = await Promise.all([
+    getActiveBuildings(),
+    getMyAddresses(user.id),
+    getMyOrders(user.id),
+  ]);
 
   const selectedBuilding = buildings.find((building) => building.id === profile.building_id);
   const activeOrders = orders.filter((order) => ACTIVE_STATUSES.has(order.status)).length;
@@ -118,10 +118,6 @@ async function ProfileContent() {
   );
 }
 
-export default function ProfilePage() {
-  return (
-    <Suspense fallback={<BrandLoader />}>
-      <ProfileContent />
-    </Suspense>
-  );
+export default async function ProfilePage() {
+  return <ProfileContent />;
 }

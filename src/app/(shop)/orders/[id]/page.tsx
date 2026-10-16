@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { OrderDetails } from "@/components/orders/OrderDetails";
 import { requireCustomer } from "@/features/auth/session";
 import { getMyOrder, getOrderStatusHistory } from "@/features/orders/queries";
@@ -38,10 +36,6 @@ async function OrderContent({ params, searchParams }: OrderPageProps) {
   );
 }
 
-export default function OrderPage({ params, searchParams }: OrderPageProps) {
-  return (
-    <Suspense fallback={<BrandLoader />}>
-      <OrderContent params={params} searchParams={searchParams} />
-    </Suspense>
-  );
+export default async function OrderPage({ params, searchParams }: OrderPageProps) {
+  return <OrderContent params={params} searchParams={searchParams} />;
 }

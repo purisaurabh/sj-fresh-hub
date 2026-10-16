@@ -1,7 +1,5 @@
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { DesktopNotificationsRedirect } from "@/components/notifications/DesktopNotificationsRedirect";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
 import { requireUser } from "@/features/auth/session";
@@ -36,10 +34,6 @@ async function NotificationsContent() {
   );
 }
 
-export default function NotificationsPage() {
-  return (
-    <Suspense fallback={<BrandLoader />}>
-      <NotificationsContent />
-    </Suspense>
-  );
+export default async function NotificationsPage() {
+  return <NotificationsContent />;
 }

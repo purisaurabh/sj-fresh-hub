@@ -2,11 +2,13 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { loginHref } from "@/lib/auth/next-path";
+import { toInternalEmail } from "@/lib/auth/phone";
+import { requestPath } from "@/lib/auth/request-path";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { listHasSupabaseAuthCookie } from "@/lib/supabase/session-cookie";
-import { toInternalEmail } from "@/lib/auth/phone";
-import type { Tables } from "@/types/database.types";
+import { type Tables } from "@/types/database.types";
 
 export type Profile = Pick<
   Tables<"profiles">,
@@ -77,7 +79,7 @@ export async function signInWithPhonePassword(phone: string, password: string) {
 export async function requireUser() {
   const context = await getAuthContext();
   if (!context.user) {
-    redirect("/login");
+    redirect(loginHref(await requestPath()));
   }
   return context;
 }
@@ -93,7 +95,7 @@ export async function requireCustomer() {
 export async function requireAdmin() {
   const context = await getAuthContext();
   if (!context.user) {
-    redirect("/login");
+    redirect(loginHref(await requestPath()));
   }
   if (context.profile?.role !== "admin") {
     redirect("/");

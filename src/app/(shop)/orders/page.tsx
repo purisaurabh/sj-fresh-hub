@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { PackageOpen, ShoppingBasket } from "lucide-react";
 import { OrdersPagedList } from "@/components/orders/OrdersPagedList";
 import { CustomerOrdersSkeleton } from "@/components/orders/OrdersListSkeleton";
-import { BrandLoader } from "@/components/feedback/BrandLoader";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { Button } from "@/components/ui/button";
 import { requireCustomer } from "@/features/auth/session";
@@ -101,10 +99,6 @@ async function OrdersContent({ searchParams }: OrdersPageProps) {
   );
 }
 
-export default function OrdersPage({ searchParams }: OrdersPageProps) {
-  return (
-    <Suspense fallback={<BrandLoader />}>
-      <OrdersContent searchParams={searchParams} />
-    </Suspense>
-  );
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
+  return <OrdersContent searchParams={searchParams} />;
 }

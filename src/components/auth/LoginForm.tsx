@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { loginUser } from "@/features/auth/actions";
+import { registerHref } from "@/lib/auth/next-path";
 import { authInputClassName } from "@/components/auth/auth-field";
 import { AuthFormStatus } from "@/components/auth/AuthFormStatus";
 import { AuthPasswordField } from "@/components/auth/AuthPasswordField";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { withActionOverlay } from "@/lib/ui/action-overlay";
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string | null }) {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
@@ -21,7 +22,7 @@ export function LoginForm() {
     event.preventDefault();
     setPending(true);
     setError(undefined);
-    const result = await withActionOverlay(() => loginUser({ phone, password }));
+    const result = await withActionOverlay(() => loginUser({ phone, password, next }));
     setPending(false);
     if (!result.ok) {
       setError(result.error);
@@ -65,7 +66,7 @@ export function LoginForm() {
       </form>
       <p className="border-t border-border pt-4 text-center text-sm text-muted-foreground md:pt-5">
         New here?{" "}
-        <Link href="/register" className="font-semibold text-forest underline-offset-2 hover:underline">
+        <Link href={registerHref(next)} className="font-semibold text-forest underline-offset-2 hover:underline">
           Create an account
         </Link>
       </p>

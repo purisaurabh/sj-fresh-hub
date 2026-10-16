@@ -15,27 +15,35 @@ export type SavedAddress = {
 
 export async function getMyAddresses(userId: string): Promise<SavedAddress[]> {
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("addresses")
-    .select("id, label, line1, landmark, pincode, building_id, latitude, longitude, is_default, buildings(name)")
+    .select("id, label, line1, landmark, pincode, building_id, latitude, longitude, is_default")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  return (data ?? []).map((row) => {
-    const related = row.buildings;
-    const buildingName = Array.isArray(related) ? related[0]?.name : related?.name;
+  if (error || !data) {
+    return [];
+  }
 
-    return {
-      id: row.id,
-      label: row.label,
-      line1: row.line1,
-      landmark: row.landmark,
-      pincode: row.pincode,
-      building_id: row.building_id,
-      building_name: buildingName ?? null,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      is_default: row.is_default,
-    };
-  });
+  const buildingIds = [...new Set(data.map((row) => row.building_id).filter((id): id is string => Boolean(id)))];
+  const names = new Map<string, string>();
+  if (buildingIds.length > 0) {
+    const { data: buildings } = await supabase.from("buildings").select("id, name").in("id", buildingIds);
+    for (const building of buildings ?? []) {
+      names.set(building.id, building.name);
+    }
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    label: row.label,
+    line1: row.line1,
+    landmark: row.landmark,
+    pincode: row.pincode,
+    building_id: row.building_id,
+    building_name: row.building_id ? (names.get(row.building_id) ?? null) : null,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    is_default: row.is_default,
+  }));
 }

@@ -12,6 +12,7 @@ import {
   homePathForRole,
   signInWithPhonePassword,
 } from "@/features/auth/session";
+import { safeNextPath } from "@/lib/auth/next-path";
 
 async function requireActiveBuilding(buildingId: string) {
   const supabase = await createServerSupabaseClient();
@@ -22,6 +23,24 @@ async function requireActiveBuilding(buildingId: string) {
     .maybeSingle();
 
   return assertActiveBuilding(building, buildingId);
+}
+
+function nextFromInput(input: unknown): string | null {
+  if (!input || typeof input !== "object" || !("next" in input)) {
+    return null;
+  }
+  const value = (input as { next?: unknown }).next;
+  return typeof value === "string" ? safeNextPath(value) : null;
+}
+
+function redirectAfterAuth(role: string | null | undefined, next: string | null): never {
+  if (next && role !== "admin") {
+    redirect(next);
+  }
+  if (next && role === "admin" && next.startsWith("/admin")) {
+    redirect(next);
+  }
+  redirect(homePathForRole(role));
 }
 
 export async function registerUser(input: unknown): Promise<ActionResult> {
@@ -63,7 +82,7 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirectAfterAuth("customer", nextFromInput(input));
 }
 
 export async function loginUser(input: unknown): Promise<ActionResult> {
@@ -83,7 +102,7 @@ export async function loginUser(input: unknown): Promise<ActionResult> {
   }
 
   revalidatePath("/", "layout");
-  redirect(homePathForRole(profile.role));
+  redirectAfterAuth(profile.role, nextFromInput(input));
 }
 
 export async function logoutUser(): Promise<ActionResult> {

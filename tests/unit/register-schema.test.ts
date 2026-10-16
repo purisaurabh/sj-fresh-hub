@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertActiveBuilding, loginSchema, registerSchema } from "@/features/auth/schemas";
+import { assertActiveBuilding, loginSchema, profileUpdateSchema, registerSchema } from "@/features/auth/schemas";
 
 const validInput = {
   fullName: "Asha Patil",
@@ -47,6 +47,19 @@ describe("registration schema", () => {
       validInput.buildingId,
     );
     expect(building.is_active).toBe(true);
+  });
+});
+
+describe("profile update schema", () => {
+  it("rejects a one-letter name with a readable message", () => {
+    const parsed = profileUpdateSchema.safeParse({
+      fullName: "A",
+      buildingId: validInput.buildingId,
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]?.message).toBe("Enter your full name");
+    }
   });
 });
 
