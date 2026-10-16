@@ -40,6 +40,13 @@ function AdminHeader({
         </Link>
         <AdminNav unreadBadge={unreadBadge} activeHref={activeHref} />
         <div className="shrink-0">{profileMenu}</div>
+        <Link
+          href="/"
+          className="ml-1 hidden min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-sunshine px-3.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-sunshine/90 md:inline-flex"
+        >
+          <Store className="size-3.5" aria-hidden="true" />
+          View shop
+        </Link>
       </div>
     </header>
   );

@@ -2,8 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Store } from "lucide-react";
+import { Bell } from "lucide-react";
 import { ADMIN_NAV_LINKS, isAdminNavActive } from "@/components/admin/admin-nav-links";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 
 export function AdminNav({
   unreadBadge,
@@ -14,7 +15,7 @@ export function AdminNav({
 }) {
   return (
     <nav className="hidden items-center gap-1 text-sm font-medium md:flex" aria-label="Admin">
-      {ADMIN_NAV_LINKS.map((link) => (
+      {ADMIN_NAV_LINKS.filter((link) => link.href !== "/admin/notifications").map((link) => (
         <Link
           key={link.href}
           href={link.href}
@@ -22,17 +23,19 @@ export function AdminNav({
             isAdminNavActive(link.href, activeHref) ? "text-forest underline decoration-2 underline-offset-4" : ""
           }`}
         >
-          {link.label === "Alerts" ? "Notifications" : link.label}
-          {link.href === "/admin/notifications" ? <span className="ml-1">{unreadBadge}</span> : null}
+          {link.label}
         </Link>
       ))}
-      <Link
-        href="/"
-        className="ml-1 inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-sunshine px-3.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-sunshine/90"
-      >
-        <Store className="size-3.5" aria-hidden="true" />
-        View shop
-      </Link>
+      <NotificationDropdown role="admin">
+        <button
+          type="button"
+          className="relative flex min-h-11 min-w-11 items-center justify-center rounded-lg text-forest hover:bg-mint"
+          aria-label="Alerts"
+        >
+          <Bell className="size-5" />
+          <span className="absolute top-1 right-1">{unreadBadge}</span>
+        </button>
+      </NotificationDropdown>
     </nav>
   );
 }

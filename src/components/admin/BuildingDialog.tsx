@@ -35,13 +35,13 @@ export function BuildingDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button type="button" className="h-12 bg-forest px-5 text-white hover:bg-forest/90">
+          <Button type="button" className="h-10 bg-forest px-3 text-sm text-white hover:bg-forest/90 sm:h-12 sm:px-5">
             <Plus className="size-4" aria-hidden="true" />
             Add Building
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-900">
             {isEdit ? "Edit building" : "Add Building"}

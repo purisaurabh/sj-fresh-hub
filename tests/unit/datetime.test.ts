@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatPhone, isIsoDateOnly, startOfShopDayIso } from "@/lib/datetime";
+import { endOfShopDayIso, formatDateTime, formatPhone, isIsoDateOnly, startOfShopDayIso } from "@/lib/datetime";
 
 describe("datetime helpers", () => {
   it("formats an ISO timestamp for India locale", () => {
@@ -18,5 +18,9 @@ describe("datetime helpers", () => {
 
   it("converts a shop calendar day to UTC midnight-equivalent", () => {
     expect(startOfShopDayIso("2026-10-14")).toBe("2026-10-13T18:30:00.000Z");
+  });
+
+  it("converts a shop calendar day to an inclusive UTC end", () => {
+    expect(endOfShopDayIso("2026-10-14")).toBe("2026-10-14T18:29:59.999Z");
   });
 });

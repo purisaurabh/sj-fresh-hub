@@ -31,7 +31,7 @@ export const fallbackSettings: PublicSettings = {
   low_stock_threshold: 5,
 };
 
-export async function getPublicCatalog(query?: string, categorySlug?: string): Promise<CatalogPayload> {
+export async function getPublicCatalog(query?: string): Promise<CatalogPayload> {
   const supabase = createPublicSupabaseClient();
   if (!supabase) {
     return {
@@ -71,19 +71,12 @@ export async function getPublicCatalog(query?: string, categorySlug?: string): P
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score)
     .map(({ product }) => product)
-    .filter((product) => {
-      if (categorySlug) {
-        const category = (categoriesResult.data ?? []).find((item) => item.slug === categorySlug);
-        if (!category || product.category_id !== category.id) {
-          return false;
-        }
-      }
-      return Boolean(product.id && product.name && product.slug && product.unit);
-    })
+    .filter((product) => Boolean(product.id && product.name && product.slug && product.unit))
     .map((product) => ({
       id: product.id as string,
       name: product.name as string,
       slug: product.slug as string,
+      categoryId: product.category_id,
       categoryName: product.category_name,
       imageUrl: product.image_url,
       unit: product.unit as string,

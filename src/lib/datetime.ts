@@ -17,6 +17,11 @@ export function startOfShopDayIso(dateYmd: string): string {
   return new Date(`${dateYmd}T00:00:00+05:30`).toISOString();
 }
 
+/** Inclusive end of a calendar day in India, as a UTC ISO string for database filters. */
+export function endOfShopDayIso(dateYmd: string): string {
+  return new Date(`${dateYmd}T23:59:59.999+05:30`).toISOString();
+}
+
 export function todayInShopTz(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: SHOP_TIME_ZONE }).format(new Date());
 }

@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   },
   description,
   applicationName: "SJ Fresh Hub",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
   manifest: "/manifest.webmanifest",
   openGraph: {
     title: "SJ Fresh Hub",

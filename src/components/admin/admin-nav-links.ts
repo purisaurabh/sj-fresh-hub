@@ -1,7 +1,8 @@
-import { Bell, Building2, ClipboardList, Package } from "lucide-react";
+import { Bell, Building2, ClipboardList, Package, Tags } from "lucide-react";
 
 export const ADMIN_NAV_LINKS = [
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/buildings", label: "Buildings", icon: Building2 },
   { href: "/admin/notifications", label: "Alerts", icon: Bell },

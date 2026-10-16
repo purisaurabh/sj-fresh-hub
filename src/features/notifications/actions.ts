@@ -3,8 +3,13 @@
 import { z } from "zod";
 import { actionError, actionSuccess, type ActionResult } from "@/lib/action-result";
 import { requireUser } from "@/features/auth/session";
+import { getMyNotificationsPage, type NotificationPage } from "@/features/notifications/queries";
 
 const notificationIdSchema = z.string().uuid();
+
+export async function listMyNotifications(offset = 0): Promise<NotificationPage> {
+  return getMyNotificationsPage(offset);
+}
 
 export async function markNotificationRead(notificationId: string): Promise<ActionResult> {
   const parsed = notificationIdSchema.safeParse(notificationId);

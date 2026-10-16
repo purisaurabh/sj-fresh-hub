@@ -8,7 +8,6 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { HeaderSearch } from "@/components/layout/HeaderSearch";
 import { getAuthContext } from "@/features/auth/session";
 import { getUnreadNotificationCount } from "@/features/notifications/queries";
-import { notificationsPathForRole } from "@/features/notifications/paths";
 
 function HeaderActionsFallback() {
   return <span className="inline-flex size-11 items-center justify-center" aria-hidden="true">
@@ -49,7 +48,6 @@ async function HeaderActions() {
   }
 
   const unreadCount = await getUnreadNotificationCount();
-  const notificationsHref = notificationsPathForRole(profile?.role);
 
   return (
     <>
@@ -66,7 +64,12 @@ async function HeaderActions() {
       >
         My Orders
       </Link>
-      <NotificationBell href={notificationsHref} unreadCount={unreadCount} userId={user.id} className="hidden md:flex" />
+      <NotificationBell
+        unreadCount={unreadCount}
+        userId={user.id}
+        role={profile?.role}
+        className="hidden md:flex"
+      />
       <ProfileMenu name={name} phone={phone} showProfileLink />
     </>
   );

@@ -7,6 +7,7 @@ import { buildingSchema, categorySchema, orderStatusSchema, productSchema } from
 import { mapOrderError } from "@/features/orders/errors";
 import { notifyAfterCommit } from "@/features/notifications/notify";
 import { slugify } from "@/lib/slug";
+import { hasDuplicateName } from "@/lib/unique-name";
 import { MAX_PRODUCT_IMAGE_BYTES, PRODUCT_IMAGE_BUCKET } from "@/lib/constants";
 
 function revalidateStorefront() {
@@ -103,7 +104,6 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
     quantityStep: formData.get("quantityStep"),
     price: formData.get("price"),
     stockQuantity: formData.get("stockQuantity"),
-    status: formData.get("status"),
   });
   if (!parsed.success) {
     return actionError(parsed.error.issues[0]?.message ?? "Check the product form.");
@@ -111,6 +111,10 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
 
   const { supabase } = await requireAdmin();
   const productId = String(formData.get("id") ?? "");
+  const { data: namedProducts } = await supabase.from("products").select("id, name");
+  if (hasDuplicateName(namedProducts ?? [], parsed.data.name, productId || undefined)) {
+    return actionError("A product with this name already exists.");
+  }
   const slug = await uniqueSlug("products", parsed.data.name, productId || undefined);
   const file = formData.get("image");
 
@@ -126,7 +130,6 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
         quantity_step: parsed.data.quantityStep,
         price: parsed.data.price,
         stock_quantity: parsed.data.stockQuantity,
-        status: parsed.data.status,
       })
       .eq("id", productId);
     if (error) {
@@ -154,7 +157,7 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
         quantity_step: parsed.data.quantityStep,
         price: parsed.data.price,
         stock_quantity: parsed.data.stockQuantity,
-        status: parsed.data.status,
+        status: "active",
       })
       .select("id")
       .maybeSingle();
@@ -189,32 +192,103 @@ export async function setProductStatus(productId: string, status: "active" | "in
   return actionSuccess(status === "active" ? "Product activated." : "Product deactivated.");
 }
 
+export async function deleteProduct(productId: string): Promise<ActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(productId)) {
+    return actionError("Could not delete the product.");
+  }
+  const { supabase } = await requireAdmin();
+  const { data: product } = await supabase.from("products").select("id, image_url").eq("id", productId).maybeSingle();
+  if (!product) {
+    return actionError("That product is no longer in the list.");
+  }
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+  if (error) {
+    if (error.code === "23503") {
+      return actionError("Past orders still point to this product. Deactivate it instead.");
+    }
+    return actionError("Could not delete the product.");
+  }
+  if (product.image_url) {
+    const marker = `/${PRODUCT_IMAGE_BUCKET}/`;
+    const index = product.image_url.indexOf(marker);
+    if (index >= 0) {
+      const path = decodeURIComponent(product.image_url.slice(index + marker.length).split("?")[0] ?? "");
+      if (path) {
+        await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([path]);
+      }
+    }
+  }
+  revalidateStorefront();
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/categories");
+  return actionSuccess("Product deleted.");
+}
+
 export async function saveCategory(input: unknown, categoryId?: string): Promise<ActionResult> {
   const parsed = categorySchema.safeParse(input);
   if (!parsed.success) {
     return actionError(parsed.error.issues[0]?.message ?? "Check the category form.");
   }
   const { supabase } = await requireAdmin();
+  const { data: namedCategories } = await supabase.from("categories").select("id, name");
+  if (hasDuplicateName(namedCategories ?? [], parsed.data.name, categoryId)) {
+    return actionError("A category with this name already exists.");
+  }
   const slug = await uniqueSlug("categories", parsed.data.name, categoryId);
-  const payload = {
-    name: parsed.data.name,
-    slug,
-    is_active: parsed.data.isActive,
-  };
   let error;
   if (categoryId) {
-    ({ error } = await supabase.from("categories").update(payload).eq("id", categoryId));
+    ({ error } = await supabase.from("categories").update({ name: parsed.data.name, slug }).eq("id", categoryId));
   } else {
     const { data: rows } = await supabase.from("categories").select("sort_order").order("sort_order", { ascending: false }).limit(1);
     const nextSort = (rows?.[0]?.sort_order ?? -1) + 1;
-    ({ error } = await supabase.from("categories").insert({ ...payload, sort_order: nextSort }));
+    ({ error } = await supabase.from("categories").insert({
+      name: parsed.data.name,
+      slug,
+      is_active: true,
+      sort_order: nextSort,
+    }));
   }
   if (error) {
     return actionError("Could not save the category.");
   }
   revalidateStorefront();
   revalidatePath("/admin/products");
+  revalidatePath("/admin/categories");
   return actionSuccess(categoryId ? "Category updated." : "Category added.");
+}
+
+export async function setCategoryStatus(categoryId: string, isActive: boolean): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("categories").update({ is_active: isActive }).eq("id", categoryId);
+  if (error) {
+    return actionError("Could not update category status.");
+  }
+  revalidateStorefront();
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/categories");
+  return actionSuccess(isActive ? "Category activated." : "Category deactivated.");
+}
+
+export async function deleteCategory(categoryId: string): Promise<ActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(categoryId)) {
+    return actionError("Could not delete the category.");
+  }
+  const { supabase } = await requireAdmin();
+  const { count } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", categoryId);
+  if ((count ?? 0) > 0) {
+    return actionError("Move or delete this category's products first.");
+  }
+  const { error } = await supabase.from("categories").delete().eq("id", categoryId);
+  if (error) {
+    return actionError("Could not delete the category.");
+  }
+  revalidateStorefront();
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/categories");
+  return actionSuccess("Category deleted.");
 }
 
 export async function saveBuilding(input: unknown, buildingId?: string): Promise<ActionResult> {
@@ -223,6 +297,10 @@ export async function saveBuilding(input: unknown, buildingId?: string): Promise
     return actionError(parsed.error.issues[0]?.message ?? "Check the building form.");
   }
   const { supabase } = await requireAdmin();
+  const { data: namedBuildings } = await supabase.from("buildings").select("id, name");
+  if (hasDuplicateName(namedBuildings ?? [], parsed.data.name, buildingId)) {
+    return actionError("A building with this name already exists.");
+  }
   const payload = {
     name: parsed.data.name,
     address: parsed.data.address || null,
@@ -231,6 +309,9 @@ export async function saveBuilding(input: unknown, buildingId?: string): Promise
     ? await supabase.from("buildings").update(payload).eq("id", buildingId)
     : await supabase.from("buildings").insert({ ...payload, is_active: true });
   if (error) {
+    if (error.code === "23505") {
+      return actionError("A building with this name already exists.");
+    }
     return actionError("Could not save the building.");
   }
   revalidateStorefront();
@@ -247,4 +328,28 @@ export async function setBuildingStatus(buildingId: string, isActive: boolean): 
   revalidateStorefront();
   revalidatePath("/admin/buildings");
   return actionSuccess(isActive ? "Building activated." : "Building deactivated.");
+}
+
+export async function deleteBuilding(buildingId: string): Promise<ActionResult> {
+  if (!/^[0-9a-f-]{36}$/i.test(buildingId)) {
+    return actionError("Could not delete the building.");
+  }
+  const { supabase } = await requireAdmin();
+  const [{ count: profileCount }, { count: addressCount }] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("building_id", buildingId),
+    supabase.from("addresses").select("id", { count: "exact", head: true }).eq("building_id", buildingId),
+  ]);
+  if ((profileCount ?? 0) + (addressCount ?? 0) > 0) {
+    return actionError("Customers still use this building. Deactivate it instead.");
+  }
+  const { error } = await supabase.from("buildings").delete().eq("id", buildingId);
+  if (error) {
+    if (error.code === "23503") {
+      return actionError("Customers still use this building. Deactivate it instead.");
+    }
+    return actionError("Could not delete the building.");
+  }
+  revalidateStorefront();
+  revalidatePath("/admin/buildings");
+  return actionSuccess("Building deleted.");
 }

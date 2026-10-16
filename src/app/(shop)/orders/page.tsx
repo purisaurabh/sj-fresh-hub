@@ -85,7 +85,7 @@ async function OrdersContent({ searchParams }: OrdersPageProps) {
           prevHref={page > 1 ? ordersPageHref(page - 1) : null}
           nextHref={page * pageSize < total ? ordersPageHref(page + 1) : null}
           scroll
-          skeleton={<CustomerOrdersSkeleton />}
+          skeleton={<CustomerOrdersSkeleton count={pageSize} />}
         >
           {orders.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center">

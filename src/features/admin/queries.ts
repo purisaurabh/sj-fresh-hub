@@ -2,8 +2,9 @@ import { connection } from "next/server";
 import { requireAdmin } from "@/features/auth/session";
 import { sortOrdersNewestFirst } from "@/features/orders/sort";
 import { isOrderStatus } from "@/features/orders/status";
+import { isBuildingId } from "@/features/admin/orders-filter";
 import { ADMIN_ORDERS_PAGE_SIZE, LOW_STOCK_THRESHOLD } from "@/lib/constants";
-import { isIsoDateOnly, startOfShopDayIso, todayInShopTz } from "@/lib/datetime";
+import { endOfShopDayIso, isIsoDateOnly, startOfShopDayIso, todayInShopTz } from "@/lib/datetime";
 import type { Json } from "@/types/database.types";
 
 export type AdminOrderRow = {
@@ -86,7 +87,14 @@ export async function getAdminOverviewCounts() {
 }
 
 export async function getAdminOrders(
-  filters: { status?: string; from?: string; page?: number } = {},
+  filters: {
+    status?: string;
+    building?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    page?: number;
+  } = {},
 ): Promise<{ orders: AdminOrderRow[]; total: number; page: number; pageSize: number }> {
   const { supabase } = await adminDb();
   const pageSize = ADMIN_ORDERS_PAGE_SIZE;
@@ -100,8 +108,25 @@ export async function getAdminOrders(
     query = query.eq("status", filters.status);
   }
 
+  if (isBuildingId(filters.building)) {
+    const { data: building } = await supabase.from("buildings").select("name").eq("id", filters.building).maybeSingle();
+    if (!building?.name) {
+      return { orders: [], total: 0, page, pageSize };
+    }
+    query = query.eq("building_name_snapshot", building.name);
+  }
+
   if (isIsoDateOnly(filters.from)) {
     query = query.gte("created_at", startOfShopDayIso(filters.from));
+  }
+
+  if (isIsoDateOnly(filters.to)) {
+    query = query.lte("created_at", endOfShopDayIso(filters.to));
+  }
+
+  const search = filters.q?.trim();
+  if (search) {
+    query = query.ilike("order_no", `%${search}%`);
   }
 
   const { data: orders, count } = await query
@@ -217,14 +242,22 @@ export async function getAdminCategories() {
 
 export async function getAdminBuildings() {
   const { supabase } = await adminDb();
-  const { data } = await supabase
-    .from("buildings")
-    .select("id, name, address, landmark, latitude, longitude, is_active")
-    .order("name");
+  const [{ data }, { data: addresses }, { data: profiles }] = await Promise.all([
+    supabase.from("buildings").select("id, name, address, landmark, latitude, longitude, is_active").order("name"),
+    supabase.from("addresses").select("building_id"),
+    supabase.from("profiles").select("building_id"),
+  ]);
+  const linked = new Map<string, number>();
+  for (const row of [...(addresses ?? []), ...(profiles ?? [])]) {
+    if (row.building_id) {
+      linked.set(row.building_id, (linked.get(row.building_id) ?? 0) + 1);
+    }
+  }
   return (data ?? []).map((building) => ({
     ...building,
     latitude: building.latitude == null ? null : Number(building.latitude),
     longitude: building.longitude == null ? null : Number(building.longitude),
+    linked_count: linked.get(building.id) ?? 0,
   }));
 }
 

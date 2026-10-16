@@ -1,20 +1,18 @@
 import { z } from "zod";
-import { ORDER_STATUSES, PRODUCT_STATUSES } from "@/lib/constants";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 export const productSchema = z.object({
   name: z.string().trim().min(2, "Enter a product name").max(80),
   categoryId: z.string().uuid("Select a category"),
   description: z.string().trim().max(400).optional(),
   unit: z.string().trim().min(1, "Enter a unit").max(20),
-  quantityStep: z.coerce.number().positive("Quantity step must be greater than 0"),
-  price: z.coerce.number().min(0, "Price cannot be negative"),
-  stockQuantity: z.coerce.number().min(0, "Stock cannot be negative"),
-  status: z.enum(PRODUCT_STATUSES),
+  quantityStep: z.coerce.number().finite().gt(0, "Quantity step cannot be zero"),
+  price: z.coerce.number().finite().min(0, "Price cannot be negative"),
+  stockQuantity: z.coerce.number().finite().min(0, "Stock cannot be negative"),
 });
 
 export const categorySchema = z.object({
   name: z.string().trim().min(2, "Enter a category name").max(40),
-  isActive: z.boolean(),
 });
 
 export const buildingSchema = z.object({

@@ -2,9 +2,9 @@
 -- Canonical applied SQL lives in supabase/migrations/. Do not run this file
 -- independently in production.
 
--- buildings: public SELECT of active rows; admin INSERT/UPDATE
--- categories: public SELECT of active rows; admin INSERT/UPDATE
--- products: public SELECT of active rows; admin INSERT/UPDATE
+-- buildings: public SELECT of active rows; admin INSERT/UPDATE/DELETE
+-- categories: public SELECT of active rows; admin INSERT/UPDATE/DELETE
+-- products: public SELECT of active rows; admin INSERT/UPDATE/DELETE
 -- profiles: own SELECT/INSERT/UPDATE; role forced to customer except service_role/postgres
 -- addresses: own SELECT/INSERT/UPDATE/DELETE; admin SELECT
 -- orders: own SELECT; admin SELECT/UPDATE; INSERT only via place_order()

@@ -4,9 +4,12 @@ import { CatalogSkeleton } from "@/components/shop/CatalogSkeleton";
 import { EmptyState } from "@/components/shop/EmptyState";
 import { HeroBanner } from "@/components/shop/HeroBanner";
 import { ProductCard } from "@/components/shop/ProductCard";
-import { CategoryFilter } from "@/components/shop/CategoryFilter";
+import { ShopCatalogFilters } from "@/components/shop/ShopCatalogFilters";
 import { getPublicCatalog } from "@/features/products/queries";
 import { getPublicSettings } from "@/features/settings/queries";
+import { filterShopCatalog, parseShopCatalogFilter, shopCatalogHref } from "@/features/shop/catalog-filter";
+import { LOW_STOCK_THRESHOLD } from "@/lib/constants";
+import type { StorefrontProduct } from "@/features/products/types";
 
 export const metadata = {
   title: "Shop",
@@ -14,7 +17,13 @@ export const metadata = {
 };
 
 type ShopPageProps = {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    category?: string;
+    stock?: string;
+    price?: string;
+    sort?: string;
+  }>;
 };
 
 async function HomeHero() {
@@ -29,8 +38,32 @@ async function HomeHero() {
   );
 }
 
-async function Catalog({ query, category }: { query?: string; category?: string }) {
-  const catalog = await getPublicCatalog(query, category);
+function ProductGrid({
+  products,
+  lowStockThreshold,
+}: {
+  products: StorefrontProduct[];
+  lowStockThreshold?: number;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {products.map((product) => (
+        <ProductCard key={product.id} product={product} lowStockThreshold={lowStockThreshold} />
+      ))}
+    </div>
+  );
+}
+
+async function CatalogFromSearch({
+  searchParams,
+}: {
+  searchParams: ShopPageProps["searchParams"];
+}) {
+  const params = await searchParams;
+  const filter = parseShopCatalogFilter(params);
+  const catalog = await getPublicCatalog(filter.q);
+  const threshold = catalog.settings?.low_stock_threshold ?? LOW_STOCK_THRESHOLD;
+  const visible = filterShopCatalog(catalog.products, filter, threshold, catalog.categories);
 
   if (!catalog.configured) {
     return (
@@ -41,70 +74,55 @@ async function Catalog({ query, category }: { query?: string; category?: string 
     );
   }
 
-  const resultsHeading = query ? (
+  const resultsHeading = filter.q ? (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="text-sm text-gray-700">
-        {catalog.products.length} {catalog.products.length === 1 ? "result" : "results"} for{" "}
-        <span className="font-semibold text-gray-900">&ldquo;{query}&rdquo;</span>
+        Showing matches for <span className="font-semibold text-gray-900">&ldquo;{filter.q}&rdquo;</span>
       </p>
-      <Link href="/" className="inline-flex min-h-11 items-center text-sm font-semibold text-forest hover:underline">
+      <Link
+        href={shopCatalogHref({ ...filter, q: undefined })}
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-forest hover:underline"
+      >
         Clear search
       </Link>
     </div>
   ) : null;
 
-  if (catalog.products.length === 0) {
-    return (
-      <div className="flex flex-col gap-3">
-        {resultsHeading}
-        <EmptyState
-          title={query ? `No products match “${query}”` : "No products found"}
-          description={
-            query
-              ? "Check the spelling or try a shorter word, like “tomato” or “apple”."
-              : "Try a different category, or check that products are active in the admin inventory."
-          }
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {resultsHeading}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {catalog.products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            lowStockThreshold={catalog.settings?.low_stock_threshold}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-async function CatalogFromSearch({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; category?: string }>;
-}) {
-  const params = await searchParams;
-  const query = params.q?.trim().replace(/\s+/g, " ") || undefined;
-  const category = query ? undefined : params.category?.trim() || undefined;
-  const { categories } = await getPublicCatalog();
-
   return (
     <>
-      {query ? null : (
+      {filter.q ? null : (
         <Suspense fallback={<HeroFallback />}>
           <HomeHero />
         </Suspense>
       )}
-      <CategoryFilter categories={categories} selected={category}>
-        <Catalog query={query} category={category} />
-      </CategoryFilter>
+      <ShopCatalogFilters filter={filter} categories={catalog.categories} resultCount={visible.length}>
+        {catalog.products.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            {resultsHeading}
+            <EmptyState
+              title={filter.q ? `No products match “${filter.q}”` : "No products found"}
+              description={
+                filter.q
+                  ? "Check the spelling or try a shorter word, like “tomato” or “apple”."
+                  : "Check that products are active in the admin inventory."
+              }
+            />
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="flex flex-col gap-3">
+            {resultsHeading}
+            <EmptyState
+              title="No products match these filters"
+              description="Clear filters or try a different search."
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {resultsHeading}
+            <ProductGrid products={visible} lowStockThreshold={threshold} />
+          </div>
+        )}
+      </ShopCatalogFilters>
     </>
   );
 }

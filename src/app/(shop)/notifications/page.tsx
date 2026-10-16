@@ -2,9 +2,10 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
+import { DesktopNotificationsRedirect } from "@/components/notifications/DesktopNotificationsRedirect";
 import { NotificationInbox } from "@/components/notifications/NotificationInbox";
 import { requireUser } from "@/features/auth/session";
-import { getMyNotifications } from "@/features/notifications/queries";
+import { getMyNotificationsPage } from "@/features/notifications/queries";
 import { notificationsPathForRole } from "@/features/notifications/paths";
 
 export const metadata = { title: "Notifications" };
@@ -15,16 +16,23 @@ async function NotificationsContent() {
   if (profile?.role === "admin") {
     redirect(notificationsPathForRole("admin"));
   }
-  const notifications = await getMyNotifications();
+  const page = await getMyNotificationsPage();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 md:text-2xl">Notifications</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Live updates about your orders, all in one place.</p>
+    <>
+      <DesktopNotificationsRedirect href="/" />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 md:hidden">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900">Alerts</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Live updates about your orders, all in one place.</p>
+        </div>
+        <NotificationInbox
+          initialNotifications={page.notifications}
+          initialHasMore={page.hasMore}
+          role={profile?.role ?? "customer"}
+        />
       </div>
-      <NotificationInbox notifications={notifications} role={profile?.role ?? "customer"} />
-    </div>
+    </>
   );
 }
 

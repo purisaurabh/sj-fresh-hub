@@ -1,54 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Ban,
-  Bell,
-  BellOff,
-  CheckCheck,
-  CheckCircle2,
-  ChefHat,
-  ChevronRight,
-  PackageCheck,
-  ShoppingBag,
-  Truck,
-  type LucideIcon,
-} from "lucide-react";
+import { Bell, BellOff, CheckCheck, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { markAllNotificationsRead, markNotificationRead } from "@/features/notifications/actions";
+import { notificationTone } from "@/components/notifications/notification-meta";
+import { listMyNotifications, markAllNotificationsRead, markNotificationRead } from "@/features/notifications/actions";
 import { withLocalReads } from "@/features/notifications/read-state";
 import type { AppNotification } from "@/features/notifications/queries";
 import { notificationOrderHref } from "@/features/notifications/paths";
 import { useUnreadNotifications } from "@/features/notifications/unread-store";
 
 const TIME_ZONE = "Asia/Kolkata";
-
-type Tone = { icon: LucideIcon; className: string };
-
-function toneFor(item: AppNotification): Tone {
-  const text = `${item.title} ${item.message}`.toLowerCase();
-  if (text.includes("cancel") || text.includes("reject")) {
-    return { icon: Ban, className: "bg-red-50 text-destructive" };
-  }
-  if (text.includes("delivered")) {
-    return { icon: PackageCheck, className: "bg-emerald-100 text-emerald-800" };
-  }
-  if (text.includes("out for delivery") || text.includes("on the way")) {
-    return { icon: Truck, className: "bg-orange-100 text-orange-800" };
-  }
-  if (text.includes("prepar") || text.includes("pack")) {
-    return { icon: ChefHat, className: "bg-sky-100 text-sky-800" };
-  }
-  if (text.includes("accepted")) {
-    return { icon: CheckCircle2, className: "bg-mint text-forest" };
-  }
-  if (text.includes("new order") || text.includes("placed")) {
-    return { icon: ShoppingBag, className: "bg-sunshine/30 text-amber-900" };
-  }
-  return { icon: Bell, className: "bg-mint text-forest" };
-}
 
 function dayKey(iso: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(Date.parse(iso));
@@ -88,14 +52,24 @@ function groupByDay(notifications: AppNotification[]) {
 }
 
 export function NotificationInbox({
-  notifications,
+  initialNotifications,
+  initialHasMore,
   role,
 }: {
-  notifications: AppNotification[];
+  initialNotifications: AppNotification[];
+  initialHasMore: boolean;
   role: string | null;
 }) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadingMoreRef = useRef(false);
+  const notificationsRef = useRef(initialNotifications);
+  const hasMoreRef = useRef(initialHasMore);
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
   const readIds = useUnreadNotifications((state) => state.readIds);
   const allRead = useUnreadNotifications((state) => state.allRead);
+  const unreadTotal = useUnreadNotifications((state) => state.count);
   const markRead = useUnreadNotifications((state) => state.markRead);
   const unmarkRead = useUnreadNotifications((state) => state.unmarkRead);
   const markAllRead = useUnreadNotifications((state) => state.markAllRead);
@@ -104,7 +78,57 @@ export function NotificationInbox({
     () => withLocalReads(notifications, readIds, allRead),
     [allRead, notifications, readIds],
   );
-  const unreadCount = items.filter((item) => !item.is_read).length;
+  notificationsRef.current = notifications;
+  hasMoreRef.current = hasMore;
+
+  useEffect(() => {
+    setNotifications(initialNotifications);
+    setHasMore(initialHasMore);
+  }, [initialHasMore, initialNotifications]);
+
+  function loadMore() {
+    const current = notificationsRef.current;
+    if (!hasMoreRef.current || loadingMoreRef.current || !current.length) {
+      return;
+    }
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    void listMyNotifications(current.length)
+      .then((page) => {
+        setNotifications((rows) => {
+          const seen = new Set(rows.map((item) => item.id));
+          return [...rows, ...page.notifications.filter((item) => !seen.has(item.id))];
+        });
+        setHasMore(page.hasMore);
+      })
+      .catch(() => {
+        toast.error("Could not load more alerts.");
+      })
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      });
+  }
+
+  useEffect(() => {
+    if (!hasMore) {
+      return;
+    }
+    const sentinel = sentinelRef.current;
+    if (!sentinel) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { root: null, rootMargin: "240px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, items.length]);
 
   function onRead(id: string) {
     markRead(id);
@@ -118,10 +142,11 @@ export function NotificationInbox({
 
   function onReadAll() {
     const unreadIds = items.filter((item) => !item.is_read).map((item) => item.id);
+    const previousCount = unreadTotal;
     markAllRead(unreadIds);
     void markAllNotificationsRead().then((result) => {
       if (!result.ok) {
-        revertAll(unreadIds.length);
+        revertAll(previousCount);
         toast.error(result.error);
       }
     });
@@ -149,20 +174,20 @@ export function NotificationInbox({
         <p className="flex items-center gap-2 text-sm text-gray-700">
           <span
             className={`flex size-8 items-center justify-center rounded-full ${
-              unreadCount > 0 ? "bg-forest text-white" : "bg-mint text-forest"
+              unreadTotal > 0 ? "bg-forest text-white" : "bg-mint text-forest"
             }`}
           >
             <Bell className="size-4" aria-hidden="true" />
           </span>
-          {unreadCount > 0 ? (
+          {unreadTotal > 0 ? (
             <span>
-              <span className="font-semibold text-gray-900">{unreadCount} unread</span> of {notifications.length}
+              <span className="font-semibold text-gray-900">{unreadTotal} unread</span>
             </span>
           ) : (
             <span>You&apos;re all caught up</span>
           )}
         </p>
-        {unreadCount > 0 ? (
+        {unreadTotal > 0 ? (
           <Button type="button" variant="ghost" className="h-10 text-forest hover:bg-mint" onClick={onReadAll}>
             <CheckCheck className="size-4" aria-hidden="true" />
             Mark all as read
@@ -176,13 +201,13 @@ export function NotificationInbox({
           <ul className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
             {group.items.map((item) => {
               const href = notificationOrderHref(item.order_id, role);
-              const tone = toneFor(item);
+              const tone = notificationTone(item);
               const Icon = tone.icon;
               return (
                 <li
                   key={item.id}
-                  className={`relative flex gap-3 border-b border-border p-4 last:border-b-0 sm:gap-4 ${
-                    item.is_read ? "bg-white" : "bg-mint/35"
+                  className={`relative flex gap-3 border-b border-border p-4 last:border-b-0 transition-colors sm:gap-4 ${
+                    item.is_read ? "bg-white hover:bg-mint" : "bg-mint/35 hover:bg-mint"
                   }`}
                 >
                   {!item.is_read ? (
@@ -206,8 +231,7 @@ export function NotificationInbox({
                         ) : null}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-sm text-muted-foreground">{item.message}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
                       {href ? (
                         <Link
                           href={item.is_read ? href : `${href}?n=${item.id}`}
@@ -239,6 +263,16 @@ export function NotificationInbox({
           </ul>
         </section>
       ))}
+
+      {hasMore ? (
+        <div ref={sentinelRef} className="flex h-12 items-center justify-center" aria-live="polite">
+          {loadingMore ? (
+            <span className="relative block size-6" role="status" aria-label="Loading more alerts">
+              <span className="absolute inset-0 animate-spin rounded-full border-2 border-mint border-t-forest" />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

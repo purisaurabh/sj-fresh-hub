@@ -1,5 +1,3 @@
-export const DEFAULT_RADIUS_KM = 5;
-export const EARTH_RADIUS_KM = 6371;
 export const LOW_STOCK_THRESHOLD = 5;
 export const PRODUCT_IMAGE_BUCKET = "product-images";
 export const MAX_PRODUCT_IMAGE_BYTES = 200 * 1024;
@@ -7,6 +5,8 @@ export const ORDER_NO_PREFIX = "SFH-";
 export const SHOP_CONTACT_PHONE = "9876543210";
 export const ORDERS_PAGE_SIZE = 8;
 export const ADMIN_ORDERS_PAGE_SIZE = ORDERS_PAGE_SIZE;
+export const ADMIN_CATALOG_PAGE_SIZE = ADMIN_ORDERS_PAGE_SIZE;
+export const NOTIFICATIONS_PAGE_SIZE = 12;
 
 export const SHOP_HOURS_TITLE = "Order and delivery hours";
 export const SHOP_HOURS_MESSAGE =

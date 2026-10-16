@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { BrandLoader } from "@/components/feedback/BrandLoader";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { MobileNavChrome } from "@/components/layout/MobileNavChrome";
 import { ShopShell } from "@/components/layout/ShopShell";
@@ -40,10 +39,6 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="flex flex-1 flex-col">
-      <AnnouncementBar
-        announcement={settings.announcement_text}
-        deliveryArea={settings.delivery_area_text}
-      />
       <SiteHeader />
       <main className="mx-auto w-full max-w-[1250px] flex-1 px-4 py-4 md:px-6 md:py-6">
         <ShopShell>
@@ -53,7 +48,8 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
       <SiteFooter
         shopName={settings.shop_name}
         shopPhone={settings.shop_phone || SHOP_CONTACT_PHONE}
-        deliveryArea={settings.delivery_area_text}      />
+        deliveryArea={settings.delivery_area_text}
+      />
       <Suspense fallback={<MobileNavChrome showAlerts={false} />}>
         <ShopMobileNav />
       </Suspense>

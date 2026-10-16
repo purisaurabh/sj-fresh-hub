@@ -35,19 +35,21 @@ export function ProductDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button type="button" className="h-10 w-full bg-forest px-3 text-sm text-white hover:bg-forest/90 sm:h-12 sm:w-auto sm:px-5">
+          <Button type="button" className="h-10 bg-forest px-3 text-sm text-white hover:bg-forest/90 sm:h-12 sm:px-5">
             <Plus className="size-4" aria-hidden="true" />
             Add product
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg" onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-900">
             {isEdit ? `Edit ${product?.name}` : "Add product"}
           </DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update price, stock or photo. Changes show in the shop after you save." : "Fill in the details and save. The product appears in the shop if it is active."}
+            {isEdit
+              ? "Update price, stock or photo. Use Activate or Deactivate on the list to show it in the shop."
+              : "Fill in the details and save. New products start active; you can deactivate them from the list."}
           </DialogDescription>
         </DialogHeader>
         {options.length === 0 ? (

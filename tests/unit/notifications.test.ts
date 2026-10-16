@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { relativeShort } from "@/components/notifications/notification-meta";
 import { notificationOrderHref, notificationsPathForRole } from "@/features/notifications/paths";
 import { shouldRefreshOnNotificationChange, withLocalReads } from "@/features/notifications/read-state";
 import { shouldPollNotifications } from "@/features/notifications/realtime";
+
+describe("relativeShort", () => {
+  it("uses compact LinkedIn-style ages", () => {
+    const now = Date.now();
+    expect(relativeShort(new Date(now - 30_000).toISOString())).toBe("now");
+    expect(relativeShort(new Date(now - 5 * 60_000).toISOString())).toBe("5m");
+    expect(relativeShort(new Date(now - 24 * 60 * 60_000).toISOString())).toBe("24h");
+    expect(relativeShort(new Date(now - 2 * 24 * 60 * 60_000).toISOString())).toBe("2d");
+  });
+});
 
 describe("notification paths", () => {
   it("sends each role to their inbox and related order", () => {

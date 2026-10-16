@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { ADMIN_ORDERS_PAGE_SIZE, ORDERS_PAGE_SIZE } from "@/lib/constants";
 
-export function CustomerOrdersSkeleton({ count = 4 }: { count?: number }) {
+export function CustomerOrdersSkeleton({ count = ORDERS_PAGE_SIZE }: { count?: number }) {
   return (
     <ul className="flex flex-col gap-3" aria-busy="true" aria-live="polite">
       <span className="sr-only">Loading orders</span>
@@ -16,14 +17,8 @@ export function CustomerOrdersSkeleton({ count = 4 }: { count?: number }) {
                 </div>
                 <Skeleton className="h-6 w-20 rounded-full" />
               </div>
-              <Skeleton className="mt-3 h-4 w-full" />
               <Skeleton className="mt-2 h-3 w-2/3" />
             </div>
-          </div>
-          <div className="mt-4 flex gap-1.5">
-            {Array.from({ length: 5 }).map((__, bar) => (
-              <Skeleton key={bar} className="h-1.5 flex-1 rounded-full" />
-            ))}
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-dashed border-border pt-3">
             <Skeleton className="h-5 w-24" />
@@ -35,7 +30,7 @@ export function CustomerOrdersSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
-export function AdminOrdersSkeleton({ count = 6 }: { count?: number }) {
+export function AdminOrdersSkeleton({ count = ADMIN_ORDERS_PAGE_SIZE }: { count?: number }) {
   return (
     <ul className="grid gap-2 lg:grid-cols-2" aria-busy="true" aria-live="polite">
       <span className="sr-only">Loading orders</span>

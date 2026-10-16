@@ -4,32 +4,29 @@ import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { parseShopCatalogFilter, shopCatalogHref } from "@/features/shop/catalog-filter";
 import { useRouteTransition } from "@/lib/ui/route-transition";
 
 const LIVE_SEARCH_DELAY_MS = 300;
-
-function searchHref(query: string, category: string | null) {
-  const params = new URLSearchParams();
-  const trimmed = query.trim().replace(/\s+/g, " ");
-  if (trimmed) {
-    params.set("q", trimmed);
-  } else if (category) {
-    params.set("category", category);
-  }
-  const search = params.toString();
-  return search ? `/?${search}` : "/";
-}
 
 function SearchField({ id }: { id: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") ?? "";
-  const category = searchParams.get("category");
+  const filter = parseShopCatalogFilter({
+    q: searchParams.get("q") ?? undefined,
+    category: searchParams.get("category") ?? undefined,
+    stock: searchParams.get("stock") ?? undefined,
+    price: searchParams.get("price") ?? undefined,
+    sort: searchParams.get("sort") ?? undefined,
+  });
   const [value, setValue] = useState(urlQuery);
   const [isPending, startTransition] = useTransition();
   const startRoute = useRouteTransition((state) => state.start);
   const lastSentRef = useRef(urlQuery);
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
 
   useEffect(() => {
     if (urlQuery !== lastSentRef.current) {
@@ -49,17 +46,20 @@ function SearchField({ id }: { id: string }) {
     const timer = window.setTimeout(() => {
       lastSentRef.current = normalized;
       startTransition(() => {
-        router.replace(searchHref(normalized, category), { scroll: false });
+        router.replace(shopCatalogHref({ ...filterRef.current, q: normalized || undefined }), { scroll: false });
       });
     }, LIVE_SEARCH_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [category, pathname, router, value]);
+  }, [pathname, router, value]);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalized = value.trim().replace(/\s+/g, " ");
     lastSentRef.current = normalized;
-    const href = searchHref(normalized, pathname === "/" ? category : null);
+    const href = shopCatalogHref({
+      ...(pathname === "/" ? filterRef.current : {}),
+      q: normalized || undefined,
+    });
     if (pathname === "/") {
       startTransition(() => {
         router.replace(href, { scroll: false });
@@ -77,7 +77,7 @@ function SearchField({ id }: { id: string }) {
     if (pathname === "/" && lastSentRef.current) {
       lastSentRef.current = "";
       startTransition(() => {
-        router.replace(searchHref("", category), { scroll: false });
+        router.replace(shopCatalogHref({ ...filterRef.current, q: undefined }), { scroll: false });
       });
     }
   }

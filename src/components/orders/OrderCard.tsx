@@ -1,57 +1,15 @@
 import Link from "next/link";
 import { ChevronRight, ShoppingBag } from "lucide-react";
-import {
-  PROGRESS_STEPS,
-  STATUS_HINT,
-  STATUS_ICON,
-  formatQuantity,
-  isClosedStatus,
-} from "@/components/orders/order-status-meta";
+import { STATUS_HINT, STATUS_ICON, isClosedStatus } from "@/components/orders/order-status-meta";
 import type { CustomerOrder } from "@/features/orders/queries";
 import { isOrderStatus, orderStatusBadgeClass, orderStatusLabel } from "@/features/orders/status";
-import type { OrderStatus } from "@/lib/constants";
 import { formatDateTime } from "@/lib/datetime";
 import { formatInr } from "@/lib/money";
-
-function itemsSummary(order: CustomerOrder) {
-  const shown = order.items.slice(0, 3).map(
-    (item) => `${item.product_name_snapshot} × ${formatQuantity(item.quantity)} ${item.unit_snapshot}`,
-  );
-  const extra = order.items.length - shown.length;
-  return extra > 0 ? `${shown.join(", ")} +${extra} more` : shown.join(", ");
-}
-
-function OrderProgress({ status }: { status: OrderStatus }) {
-  const current = PROGRESS_STEPS.findIndex((step) => step.status === status);
-
-  return (
-    <ol className="grid grid-cols-5 gap-1.5" aria-label="Order progress">
-      {PROGRESS_STEPS.map((step, index) => {
-        const done = index <= current;
-        return (
-          <li key={step.status} className="flex flex-col gap-1.5">
-            <span
-              className={`h-1.5 rounded-full ${done ? "bg-forest" : "bg-mint"} ${index === current ? "animate-pulse" : ""}`}
-              aria-hidden="true"
-            />
-            <span
-              className={`truncate text-[11px] ${done ? "font-semibold text-forest" : "text-muted-foreground"}`}
-              aria-current={index === current ? "step" : undefined}
-            >
-              {step.label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
 
 export function OrderCard({ order }: { order: CustomerOrder }) {
   const status = isOrderStatus(order.status) ? order.status : null;
   const Icon = status ? STATUS_ICON[status] : ShoppingBag;
   const closed = status !== null && isClosedStatus(status);
-  const inProgress = status !== null && !closed && status !== "delivered";
   const itemCount = order.items.length;
 
   return (
@@ -84,23 +42,13 @@ export function OrderCard({ order }: { order: CustomerOrder }) {
             </span>
           </div>
 
-          {itemCount > 0 ? (
-            <p className="mt-2 line-clamp-2 text-sm text-gray-700">{itemsSummary(order)}</p>
-          ) : null}
-
           {status ? (
-            <p className={`mt-1 text-xs ${closed ? "text-destructive" : "text-muted-foreground"}`}>
+            <p className={`mt-1.5 text-xs ${closed ? "text-destructive" : "text-muted-foreground"}`}>
               {STATUS_HINT[status]}
             </p>
           ) : null}
         </div>
       </div>
-
-      {inProgress && status ? (
-        <div className="mt-4">
-          <OrderProgress status={status} />
-        </div>
-      ) : null}
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-dashed border-border pt-3">
         <div className="min-w-0">

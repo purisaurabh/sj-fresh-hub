@@ -10,12 +10,12 @@ export function AdminPageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
         <h1 className="text-lg font-semibold text-gray-900 md:text-2xl">{title}</h1>
         {description ? <p className="mt-1 text-xs text-muted-foreground md:text-sm">{description}</p> : null}
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

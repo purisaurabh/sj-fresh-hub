@@ -69,7 +69,11 @@ export function BuildingForm({
           className="h-11 text-base"
           {...form.register("name")}
         />
-        <p className="text-xs text-destructive">{form.formState.errors.name?.message}</p>
+        {form.formState.errors.name?.message ? (
+          <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">Each building needs a unique name.</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor={`building-subtext-${buildingId ?? "new"}`}>Sub text</Label>

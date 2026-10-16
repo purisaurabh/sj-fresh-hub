@@ -1,17 +1,46 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { AuthFormStatus } from "@/components/auth/AuthFormStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveProduct } from "@/features/admin/actions";
+import { productSchema } from "@/features/admin/schemas";
 import type { AdminProductRow } from "@/features/admin/queries";
 import { MAX_PRODUCT_IMAGE_BYTES } from "@/lib/constants";
 import { withActionOverlay } from "@/lib/ui/action-overlay";
 
 type CategoryOption = { id: string; name: string };
+
+function blockMinus(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key === "-" || event.key === "−" || event.key === "e" || event.key === "E") {
+    event.preventDefault();
+  }
+}
+
+function clampNonNegative(event: FormEvent<HTMLInputElement>) {
+  const input = event.currentTarget;
+  if (input.value === "") {
+    return;
+  }
+  const value = input.valueAsNumber;
+  if (!Number.isFinite(value) || value < 0) {
+    input.value = "0";
+  }
+}
+
+function clampPositiveStep(event: FormEvent<HTMLInputElement>) {
+  const input = event.currentTarget;
+  if (input.value === "") {
+    return;
+  }
+  const value = input.valueAsNumber;
+  if (!Number.isFinite(value) || value <= 0) {
+    input.value = "";
+  }
+}
 
 export function ProductForm({
   product,
@@ -31,6 +60,19 @@ export function ProductForm({
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const parsed = productSchema.safeParse({
+      name: formData.get("name"),
+      categoryId: formData.get("categoryId"),
+      description: formData.get("description") ?? "",
+      unit: formData.get("unit"),
+      quantityStep: formData.get("quantityStep"),
+      price: formData.get("price"),
+      stockQuantity: formData.get("stockQuantity"),
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Check the product form.");
+      return;
+    }
     const file = formData.get("image");
     if (file instanceof File && file.size > MAX_PRODUCT_IMAGE_BYTES) {
       setError("Keep the product image under 200 KB.");
@@ -93,12 +135,16 @@ export function ProductForm({
             id="quantityStep"
             name="quantityStep"
             type="number"
+            inputMode="decimal"
             step="any"
             min="0.001"
             required
             defaultValue={product?.quantity_step ?? 1}
             className="h-12 text-base"
+            onKeyDown={blockMinus}
+            onInput={clampPositiveStep}
           />
+          <p className="text-xs text-muted-foreground">Must be greater than 0. Customers add this amount each tap.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="price">Price (₹)</Label>
@@ -106,11 +152,14 @@ export function ProductForm({
             id="price"
             name="price"
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0"
             required
             defaultValue={product?.price ?? ""}
             className="h-12 text-base"
+            onKeyDown={blockMinus}
+            onInput={clampNonNegative}
           />
         </div>
         <div className="space-y-2">
@@ -119,25 +168,16 @@ export function ProductForm({
             id="stockQuantity"
             name="stockQuantity"
             type="number"
+            inputMode="decimal"
             step="any"
             min="0"
             required
             defaultValue={product?.stock_quantity ?? 0}
             className="h-12 text-base"
+            onKeyDown={blockMinus}
+            onInput={clampNonNegative}
           />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
-        <select
-          id="status"
-          name="status"
-          defaultValue={product?.status ?? "active"}
-          className="h-12 w-full rounded-lg border border-input bg-input px-3 text-base"
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="image">Image (optional, max 200 KB)</Label>

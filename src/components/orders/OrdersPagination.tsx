@@ -11,6 +11,7 @@ export function OrdersPagination({
   nextHref,
   pending = false,
   scroll = false,
+  label = "Pages",
   onNavigate,
 }: {
   page: number;
@@ -20,6 +21,7 @@ export function OrdersPagination({
   nextHref: string | null;
   pending?: boolean;
   scroll?: boolean;
+  label?: string;
   onNavigate?: (href: string) => void;
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -44,7 +46,7 @@ export function OrdersPagination({
   }
 
   return (
-    <nav className="flex items-center justify-center gap-2 pt-1" aria-label="Order pages" data-local-navigation>
+    <nav className="flex items-center justify-center gap-2 pt-1" aria-label={label} data-local-navigation>
       {prevHref ? (
         <Link
           href={prevHref}

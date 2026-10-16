@@ -29,7 +29,7 @@ export function CategoryForm({
   const [error, setError] = useState<string>();
   const form = useForm<CategoryFormValues, unknown, CategoryInput>({
     resolver: zodResolver(categorySchema),
-    defaultValues: defaultValues ?? { name: "", isActive: true },
+    defaultValues: defaultValues ?? { name: "" },
   });
 
   async function onSubmit(values: CategoryInput) {
@@ -43,7 +43,7 @@ export function CategoryForm({
     if (onSaved) {
       onSaved();
     } else if (!categoryId) {
-      form.reset({ name: "", isActive: true });
+      form.reset({ name: "" });
     }
   }
 
@@ -55,10 +55,6 @@ export function CategoryForm({
         <Input id={`name-${categoryId ?? "new"}`} className="h-12 text-base" {...form.register("name")} />
         <p className="text-xs text-destructive">{form.formState.errors.name?.message}</p>
       </div>
-      <label className="flex min-h-11 items-center gap-2 text-sm">
-        <input type="checkbox" {...form.register("isActive")} />
-        Active (shown in the shop)
-      </label>
       <div className="flex flex-wrap gap-2">
         <Button className="h-12 bg-forest" disabled={form.formState.isSubmitting} type="submit">
           {form.formState.isSubmitting ? "Saving…" : categoryId ? "Save category" : "Add category"}
