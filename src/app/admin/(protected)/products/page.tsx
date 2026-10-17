@@ -14,7 +14,9 @@ import { formatInr } from "@/lib/money";
 import { paginateItems } from "@/lib/paginate";
 
 const actionClass =
-  "h-10 w-full justify-center border-forest/30 px-2 text-sm font-medium text-forest";
+  "h-10 w-full cursor-pointer justify-center border-forest/30 px-2 text-sm font-medium text-forest";
+const tableActionClass =
+  "h-9 w-auto shrink-0 cursor-pointer justify-center border-forest/30 px-2.5 text-sm font-medium text-forest";
 
 export const metadata = { title: "Products" };
 
@@ -147,7 +149,7 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
                     <th className="px-4 py-3 font-semibold">Price</th>
                     <th className="px-4 py-3 font-semibold">Stock</th>
                     <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Actions</th>
+                    <th className="px-4 py-3 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -190,19 +192,19 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="grid w-64 grid-cols-3 gap-2">
+                          <div className="flex items-center justify-end gap-1.5">
                             <ProductDialog
                               product={product}
                               categories={categories}
                               trigger={
-                                <Button type="button" variant="outline" className={actionClass}>
+                                <Button type="button" variant="outline" className={tableActionClass}>
                                   <Pencil className="size-3.5" aria-hidden="true" />
                                   Edit
                                 </Button>
                               }
                             />
-                            <ProductStatusButton productId={product.id} status={product.status} className={actionClass} />
-                            <DeleteProductButton productId={product.id} productName={product.name} className="h-10" />
+                            <ProductStatusButton productId={product.id} status={product.status} className={tableActionClass} />
+                            <DeleteProductButton productId={product.id} productName={product.name} className="h-9 w-auto shrink-0 px-2.5" />
                           </div>
                         </td>
                       </tr>

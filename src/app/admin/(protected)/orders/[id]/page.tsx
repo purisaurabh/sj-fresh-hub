@@ -56,6 +56,9 @@ async function OrderDetail({ params }: OrderDetailProps) {
         ) : (
           <p className="text-sm text-muted-foreground">No phone on file</p>
         )}
+        <Link href={`/admin/users/${order.user_id}`} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-forest hover:underline">
+          View customer
+        </Link>
       </section>
       <section className="rounded-xl border border-border bg-white p-4 sm:p-5">
         <h2 className="font-semibold">Delivery</h2>

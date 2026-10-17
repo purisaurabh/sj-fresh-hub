@@ -159,7 +159,7 @@ export function NotificationDropdown({
           sideOffset={8}
           collisionPadding={16}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          style={{ width: 384, height: 384, minWidth: 384, minHeight: 384 }}
+          style={{ width: "min(384px, calc(100vw - 2rem))", height: "min(384px, calc(100dvh - 6rem))" }}
           className="z-50 box-border overflow-hidden rounded-xl border border-border bg-white p-0 shadow-[0_16px_40px_rgba(15,61,46,0.16)] outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
         >
           <div className="flex h-full flex-col" data-local-navigation>

@@ -39,7 +39,10 @@ export function ProductStatusButton({
       <Button
         type="button"
         variant="outline"
-        className={cn("h-10", className)}
+        className={cn(
+          "h-9 w-full cursor-pointer justify-center border-forest/30 px-3 text-sm font-medium text-forest",
+          className,
+        )}
         disabled={pending}
         onClick={() => (deactivating ? setConfirmOpen(true) : void onToggle())}
       >

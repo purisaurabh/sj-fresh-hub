@@ -4,10 +4,11 @@ import type { ReactNode } from "react";
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store } from "lucide-react";
+import { Bell, Store } from "lucide-react";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PageSlot } from "@/components/feedback/PageSlot";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { useRouteTransition } from "@/lib/ui/route-transition";
 
 type AdminChromeProps = {
@@ -39,7 +40,19 @@ function AdminHeader({
           Shop
         </Link>
         <AdminNav unreadBadge={unreadBadge} activeHref={activeHref} />
-        <div className="shrink-0">{profileMenu}</div>
+        <div className="flex shrink-0 items-center">
+          <NotificationDropdown role="admin">
+            <button
+              type="button"
+              className="relative flex size-11 items-center justify-center rounded-full text-forest hover:bg-mint md:hidden"
+              aria-label="Alerts"
+            >
+              <Bell className="size-5" aria-hidden="true" />
+              <span className="absolute top-1.5 right-1.5">{unreadBadge}</span>
+            </button>
+          </NotificationDropdown>
+          {profileMenu}
+        </div>
         <Link
           href="/"
           className="ml-1 hidden min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-sunshine px-3.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-sunshine/90 md:inline-flex"
@@ -57,10 +70,10 @@ function AdminHeaderWithPath(props: AdminChromeProps) {
   return <AdminHeader {...props} pathname={pathname} />;
 }
 
-function AdminMobileNavWithPath({ unreadBadge }: { unreadBadge?: ReactNode }) {
+function AdminMobileNavWithPath() {
   const pathname = usePathname();
   const activeHref = useActiveHref(pathname);
-  return <AdminMobileNav unreadBadge={unreadBadge} activeHref={activeHref} />;
+  return <AdminMobileNav activeHref={activeHref} />;
 }
 
 export function AdminShell({
@@ -76,8 +89,8 @@ export function AdminShell({
       <div className="mx-auto w-full max-w-[1250px] flex-1 px-4 py-6 pb-28 md:px-6 md:pb-6">
         <PageSlot>{children}</PageSlot>
       </div>
-      <Suspense fallback={<AdminMobileNav unreadBadge={unreadBadge} activeHref="" />}>
-        <AdminMobileNavWithPath unreadBadge={unreadBadge} />
+      <Suspense fallback={<AdminMobileNav activeHref="" />}>
+        <AdminMobileNavWithPath />
       </Suspense>
     </div>
   );

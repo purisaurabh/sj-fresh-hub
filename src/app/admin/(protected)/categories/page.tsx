@@ -18,7 +18,7 @@ import { ADMIN_CATALOG_PAGE_SIZE } from "@/lib/constants";
 import { paginateItems } from "@/lib/paginate";
 
 const actionClass =
-  "h-10 w-full justify-center border-forest/30 px-2 text-sm font-medium text-forest";
+  "h-10 w-full cursor-pointer justify-center border-forest/30 px-2 text-sm font-medium text-forest";
 
 export const metadata = { title: "Categories" };
 

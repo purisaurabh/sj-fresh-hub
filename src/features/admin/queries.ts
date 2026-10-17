@@ -20,6 +20,7 @@ export type AdminOrderRow = {
 };
 
 export type AdminOrderDetail = AdminOrderRow & {
+  user_id: string;
   subtotal: number;
   delivery_fee: number;
   customer_note: string | null;
@@ -195,6 +196,7 @@ export async function getAdminOrder(orderId: string): Promise<AdminOrderDetail |
     delivery_fee: Number(order.delivery_fee),
     building_name_snapshot: order.building_name_snapshot,
     created_at: order.created_at,
+    user_id: order.user_id,
     customer_name: profile?.full_name ?? "Customer",
     customer_phone: profile?.phone ?? null,
     customer_note: order.customer_note,
@@ -265,4 +267,170 @@ export async function getAdminSettings() {
   const { supabase } = await adminDb();
   const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
   return data;
+}
+
+const OPEN_ORDER_STATUSES = new Set(["placed", "accepted", "preparing", "out_for_delivery"]);
+const EXCLUDED_ORDER_VALUE = new Set(["rejected", "cancelled"]);
+
+export type AdminUserRow = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  role: string;
+  building_id: string | null;
+  building_name: string | null;
+  created_at: string;
+  order_count: number;
+  open_order_count: number;
+  order_value: number;
+  last_order_at: string | null;
+};
+
+export type AdminUserAddress = {
+  id: string;
+  label: string | null;
+  line1: string;
+  landmark: string | null;
+  pincode: string | null;
+  is_default: boolean;
+  building_name: string | null;
+};
+
+export type AdminUserOrder = {
+  id: string;
+  order_no: string;
+  status: string;
+  payment_status: string;
+  total: number;
+  created_at: string;
+  building_name_snapshot: string;
+};
+
+export type AdminUserDetail = AdminUserRow & {
+  addresses: AdminUserAddress[];
+  orders: AdminUserOrder[];
+};
+
+function summarizeUserOrders(orders: { status: string; total: number; created_at: string }[]) {
+  let openOrderCount = 0;
+  let orderValue = 0;
+  let lastOrderAt: string | null = null;
+  for (const order of orders) {
+    if (OPEN_ORDER_STATUSES.has(order.status)) {
+      openOrderCount += 1;
+    }
+    if (!EXCLUDED_ORDER_VALUE.has(order.status)) {
+      orderValue += Number(order.total);
+    }
+    if (!lastOrderAt || order.created_at > lastOrderAt) {
+      lastOrderAt = order.created_at;
+    }
+  }
+  return {
+    order_count: orders.length,
+    open_order_count: openOrderCount,
+    order_value: orderValue,
+    last_order_at: lastOrderAt,
+  };
+}
+
+export async function getAdminUsers(): Promise<AdminUserRow[]> {
+  const { supabase } = await adminDb();
+  const [{ data: profiles }, { data: buildings }, { data: orders }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, phone, role, building_id, created_at"),
+    supabase.from("buildings").select("id, name"),
+    supabase.from("orders").select("user_id, status, total, created_at"),
+  ]);
+  const buildingNames = new Map((buildings ?? []).map((building) => [building.id, building.name]));
+  const ordersByUser = new Map<string, { status: string; total: number; created_at: string }[]>();
+  for (const order of orders ?? []) {
+    const list = ordersByUser.get(order.user_id) ?? [];
+    list.push({ status: order.status, total: Number(order.total), created_at: order.created_at });
+    ordersByUser.set(order.user_id, list);
+  }
+
+  return (profiles ?? []).map((profile) => ({
+    id: profile.id,
+    full_name: profile.full_name,
+    phone: profile.phone,
+    role: profile.role,
+    building_id: profile.building_id,
+    building_name: profile.building_id ? (buildingNames.get(profile.building_id) ?? null) : null,
+    created_at: profile.created_at,
+    ...summarizeUserOrders(ordersByUser.get(profile.id) ?? []),
+  }));
+}
+
+export async function getAdminUser(userId: string): Promise<AdminUserDetail | null> {
+  if (!isBuildingId(userId)) {
+    return null;
+  }
+
+  const { supabase } = await adminDb();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, full_name, phone, role, building_id, created_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!profile) {
+    return null;
+  }
+
+  const [{ data: addresses }, { data: orders }] = await Promise.all([
+    supabase
+      .from("addresses")
+      .select("id, label, line1, landmark, pincode, is_default, building_id")
+      .eq("user_id", userId)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select("id, order_no, status, payment_status, total, created_at, building_name_snapshot")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .order("order_no", { ascending: false }),
+  ]);
+
+  const buildingIds = [
+    ...new Set(
+      [profile.building_id, ...(addresses ?? []).map((address) => address.building_id)].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ];
+  const { data: buildings } = buildingIds.length
+    ? await supabase.from("buildings").select("id, name").in("id", buildingIds)
+    : { data: [] };
+  const buildingNames = new Map((buildings ?? []).map((building) => [building.id, building.name]));
+  const userOrders = (orders ?? []).map((order) => ({
+    id: order.id,
+    order_no: order.order_no,
+    status: order.status,
+    payment_status: order.payment_status,
+    total: Number(order.total),
+    created_at: order.created_at,
+    building_name_snapshot: order.building_name_snapshot,
+  }));
+
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    phone: profile.phone,
+    role: profile.role,
+    building_id: profile.building_id,
+    building_name: profile.building_id ? (buildingNames.get(profile.building_id) ?? null) : null,
+    created_at: profile.created_at,
+    ...summarizeUserOrders(userOrders),
+    addresses: (addresses ?? []).map((address) => ({
+      id: address.id,
+      label: address.label,
+      line1: address.line1,
+      landmark: address.landmark,
+      pincode: address.pincode,
+      is_default: address.is_default,
+      building_name: address.building_id ? (buildingNames.get(address.building_id) ?? null) : null,
+    })),
+    orders: userOrders,
+  };
 }

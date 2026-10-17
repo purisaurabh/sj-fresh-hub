@@ -41,7 +41,7 @@ export function DeleteProductButton({
         type="button"
         variant="outline"
         className={cn(
-          "h-9 w-full justify-center border-destructive/30 px-3 text-sm font-medium text-destructive hover:bg-red-50",
+          "h-9 w-full cursor-pointer justify-center border-destructive/30 px-3 text-sm font-medium text-destructive hover:bg-red-50",
           className,
         )}
         disabled={pending}
